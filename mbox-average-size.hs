@@ -1,0 +1,20 @@
+import Mbox (Mbox(..), MboxMessage(..))
+import Control.Applicative ((<$>))
+import Mbox.ByteString.Lazy (parseMbox)
+import Data.List (foldl')
+import qualified Data.ByteString.Lazy as B
+
+data P a = P !a !Int
+
+-- spec: average xs = sum xs / fromIntegral (length xs)
+-- still slow (too lazy tuple): average = uncurry (/) . foldl' f (0,0) where f (a,b) x = (a+x,b+1)
+average :: Fractional a => [a] -> a
+average xs = s / fromIntegral l
+  where (P s l)     = foldl' f (P 0 0) xs
+        f (P a b) x = P (a + x) (b + 1)
+
+mboxAverageSize :: Mbox B.ByteString -> Double
+mboxAverageSize = average . map (fromIntegral . B.length . mboxMsgBody) . unMbox
+
+main :: IO ()
+main = print =<< (mboxAverageSize . parseMbox) <$> B.getContents

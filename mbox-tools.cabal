@@ -1,0 +1,43 @@
+Name:           mbox-tools
+Cabal-Version:  >=1.2
+Version:        0.1
+License:        BSD3
+License-File:   LICENSE
+Copyright:      (c) Nicolas Pouillard
+Author:         Nicolas Pouillard
+Maintainer:     Nicolas Pouillard <nicolas.pouillard@gmail.com>
+{-
+Category:       User Interfaces
+Synopsis:       A command-line interface for user input, written in Haskell.
+Description:    
+                Haskeline provides a user interface for line input in command-line
+                programs.  This library is similar in purpose to readline, but since
+                it is written in Haskell it is (hopefully) more easily used in other
+                Haskell programs.
+                .
+                Haskeline runs both on POSIX-compatible systems and on Windows
+                (under MinGW).
+Homepage:       http://trac.haskell.org/haskeline
+-}
+Stability:      Experimental
+Build-Type:     Simple
+
+flag old-base
+    Description: Use the base packages from before version 6.8
+
+Library
+    if flag(old-base)
+        Build-depends: base < 3
+    else
+        Build-depends: base>=3.0, containers>=0.1
+    Build-depends: bytestring>=0.9.0.1.1, parsec>=3.0.0, mtl>=1.1.0.1
+    Exposed-Modules: Mbox, Mbox.ByteString.Lazy
+    Other-Modules:
+    ghc-options: -Wall
+
+executable mbox-counting
+    main-is: mbox-counting.hs
+    ghc-options: -Wall
+executable mbox-average-size
+    main-is: mbox-average-size.hs
+    ghc-options: -Wall
