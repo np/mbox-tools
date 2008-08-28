@@ -33,7 +33,28 @@ printMbox = concatMap printMsg
         printField f = show f ++ nl
         nl = "\r\n"
 
-readMessage = either (error . show) id . parse message "<string>" . fixEol . C.unpack
+{-
+  Since parsing the full message is two slow, so one first extract fields.
+
+  -- the old version
+  > readMessage = either (error . show) id . parse message "<string>" . fixEol . C.unpack
+ -}
+
+readFields :: B.ByteString -> [Field]
+readFields input =
+  either err id . parse fields "<string>" . fixEol . C.unpack $ input
+  where err e = error $ "Error in the following message <<EOS\n" ++ C.unpack input ++ "\nEOS\n\n" ++ show e
+
+readMessage :: B.ByteString -> Message
+readMessage !orig = maybe (error "readMessage: parse error") id $ splitAtNlNl 0 orig
+  where splitAtNlNl !count !input = do
+          off <- (+1) <$> C.elemIndex '\n' input
+          let i' = C.drop off input
+          if C.head i' == '\n'
+           then Just $ mkMessage (C.take (off + count) orig) (C.tail i')
+           else splitAtNlNl (off + count) i'
+        mkMessage flds body =
+          Message (readFields flds) (C.unpack body) -- TODO: Provide a ByteString based Message
 
 ellipse :: Int -> String -> String
 ellipse n s = take n s ++ "..."
