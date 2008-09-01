@@ -8,3 +8,11 @@ data MboxMessage s = MboxMessage { mboxMsgSender :: s, mboxMsgTime :: s, mboxMsg
 mboxCountMessages :: Mbox s -> Int
 mboxCountMessages = length . unMbox
 
+{-
+printMbox = concatMap printMsg
+  where printMsg ((s,t),Message flds body) =
+           "From "++s++" "++t++nl++concatMap printField flds++body++nl
+        printField f = show f ++ nl
+        nl = "\r\n"
+-}
+
