@@ -1,5 +1,18 @@
+--------------------------------------------------------------------
+-- |
+-- Module    : Mbox.ByteString.Lazy
+-- Copyright : (c) Nicolas Pouillard 2008
+-- License   : BSD3
+--
+-- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
+-- Stability : provisional
+-- Portability:
+--
+--------------------------------------------------------------------
+
 {-# LANGUAGE BangPatterns #-}
 module Mbox.ByteString.Lazy (parseMbox) where
+
 import Mbox (Mbox(..), MboxMessage(..))
 import Control.Arrow ((***))
 import Control.Applicative ((<$>))

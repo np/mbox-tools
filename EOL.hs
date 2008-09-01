@@ -1,3 +1,15 @@
+--------------------------------------------------------------------
+-- |
+-- Module    : EOL
+-- Copyright : (c) Nicolas Pouillard 2008
+-- License   : BSD3
+--
+-- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
+-- Stability : provisional
+-- Portability:
+--
+--------------------------------------------------------------------
+
 {-# LANGUAGE PatternGuards, BangPatterns #-}
 module EOL where
 

@@ -1,3 +1,15 @@
+--------------------------------------------------------------------
+-- |
+-- Module    : Mbox
+-- Copyright : (c) Nicolas Pouillard 2008
+-- License   : BSD3
+--
+-- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
+-- Stability : provisional
+-- Portability:
+--
+--------------------------------------------------------------------
+
 module Mbox (Mbox(..), MboxMessage(..), mboxCountMessages) where
 
 newtype Mbox s = Mbox { unMbox :: [MboxMessage s] }

@@ -1,3 +1,15 @@
+--------------------------------------------------------------------
+-- |
+-- Module    : Email
+-- Copyright : (c) Nicolas Pouillard 2008
+-- License   : BSD3
+--
+-- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
+-- Stability : provisional
+-- Portability:
+--
+--------------------------------------------------------------------
+
 {-# LANGUAGE BangPatterns #-}
 module Email where
 
