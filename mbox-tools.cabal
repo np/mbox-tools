@@ -30,8 +30,9 @@ Library
         Build-depends: base < 3
     else
         Build-depends: base>=3.0, containers>=0.1
-    Build-depends: bytestring>=0.9.0.1.1, parsec>=3.0.0, mtl>=1.1.0.1
-    Exposed-Modules: Mbox, Mbox.ByteString.Lazy
+    Build-depends: bytestring==0.9.0.1.1, parsec>=3.0.0, mtl>=1.1.0.1, hsemail>=1.4, mime>=0.2
+                   -- hsemail-1.4 is not yet released
+    Exposed-Modules: Mbox, Mbox.ByteString.Lazy, Email
     Other-Modules:
     ghc-options: -Wall
 
@@ -43,5 +44,7 @@ executable mbox-average-size
     ghc-options: -Wall
 executable mbox-list
     main-is: mbox-list.hs
-    Build-depends: hsemail>=1.3
+    ghc-options: -Wall
+executable mbox-grep
+    main-is: mbox-grep.hs
     ghc-options: -Wall
