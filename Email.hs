@@ -24,8 +24,9 @@ import Text.Parsec.Prim (parse)
 import EOL (fixCrlfS) -- fixCrlfB
 
 data Email = Email { emailFields  :: [Field]
-                   , rawEmail     :: B.ByteString
-                   , emailContent :: MIMEValue }
+                   , emailContent :: MIMEValue
+                   , rawEmail :: B.ByteString
+                   }
   deriving (Show)
 
 data ShowFormat = OneLinerDebug
@@ -67,7 +68,9 @@ readEmail !orig = maybe (error "readEmail: parse error") id $ splitAtNlNl 0 orig
            then Just $ mkEmail (C.take (off + count) orig) (C.tail i')
            else splitAtNlNl (off + count) i'
         mkEmail flds body =
-          Email headers orig (parseMIMEBody optional_headers (myCunpack body))
+          Email { emailFields = headers
+                , emailContent = parseMIMEBody optional_headers (myCunpack body)
+                , rawEmail = orig }
           where headers = readFields flds
                 optional_headers = [ (k,v) | OptionalField k v <- headers ]
 
@@ -75,7 +78,7 @@ ellipse :: Int -> String -> String
 ellipse n s = take n s ++ "..."
 
 showEmail :: ShowFormat -> Email -> String
-showEmail OneLinerDebug (msg@(Email flds _ content)) =
+showEmail OneLinerDebug (msg@(Email flds content _)) =
           take 30 (show (mimeType $ mime_val_type content) ++ repeat ' ') ++ " Subject: " ++
           head ([show subject | Subject subject <- flds ]
               ++ ["(malformed subject) " ++ show subject | OptionalField "Subject" subject <- flds ]
