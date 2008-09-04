@@ -42,6 +42,9 @@ executable mbox-counting
 executable mbox-average-size
     main-is: mbox-average-size.hs
     ghc-options: -Wall
+executable mbox-quoting
+    main-is: mbox-quoting.hs
+    ghc-options: -Wall
 executable mbox-list
     main-is: mbox-list.hs
     ghc-options: -Wall
