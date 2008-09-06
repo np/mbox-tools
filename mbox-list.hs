@@ -1,6 +1,6 @@
 --------------------------------------------------------------------
 -- |
--- Executable : mbox-grep
+-- Executable : mbox-list
 -- Copyright : (c) Nicolas Pouillard 2008
 -- License   : BSD3
 --
