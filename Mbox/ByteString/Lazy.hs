@@ -11,7 +11,7 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE BangPatterns #-}
-module Mbox.ByteString.Lazy (parseMbox,fromQuoting) where
+module Mbox.ByteString.Lazy (parseMbox,printMbox,fromQuoting) where
 
 import Mbox (Mbox(..), MboxMessage(..))
 import Control.Arrow ((***),first)
@@ -115,3 +115,12 @@ parseMbox = Mbox . go . skipFirstFrom
         finishMboxMessageParsing inp = MboxMessage sender time (fromQuoting pred body)
             where ((sender,time),body) = C.break (==' ') *** C.tail $ C.break (=='\n') inp
 
+printMbox :: Mbox ByteString -> ByteString
+printMbox = C.concat . map printMsg . unMbox
+  where printMsg (MboxMessage sender time body) =
+          C.append bFrom
+          $ C.append sender
+          $ C.cons   ' '
+          $ C.append time
+          $ C.cons   '\n'
+          $ C.snoc   body '\n'
