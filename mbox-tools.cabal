@@ -45,6 +45,10 @@ executable mbox-average-size
 executable mbox-quoting
     main-is: mbox-quoting.hs
     ghc-options: -Wall
+executable redact-mbox
+    main-is: redact-mbox.hs
+    Build-depends: random
+    ghc-options: -Wall
 executable mbox-list
     main-is: mbox-list.hs
     ghc-options: -Wall
