@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 --------------------------------------------------------------------
 -- |
 -- Module    : Email
@@ -14,6 +15,7 @@
 module Email where
 
 import Control.Applicative
+import Control.Arrow
 import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString.Lazy as B
 import Codec.MIME.Type (MIMEValue(..), Type(..))
@@ -22,6 +24,7 @@ import Text.ParserCombinators.Parsec.Rfc2822 (Field(..), fields)
 import Text.Parsec.ByteString.Lazy ()
 import Text.Parsec.Prim (parse)
 import EOL (fixCrlfS) -- fixCrlfB
+import System.Console.GetOpt (OptDescr(..),ArgDescr(..))
 
 data Email = Email { emailFields  :: [Field]
                    , emailContent :: MIMEValue
@@ -30,6 +33,15 @@ data Email = Email { emailFields  :: [Field]
   deriving (Show)
 
 data ShowFormat = OneLinerDebug
+                | MboxFmt
+  deriving (Eq,Enum)
+
+showFmts :: [ShowFormat]
+showFmts = [ OneLinerDebug .. ] -- since OneLinerDebug is the first
+
+instance Show ShowFormat where
+  show OneLinerDebug = "one"
+  show MboxFmt       = "mbox"
 
 myCunpack :: C.ByteString -> String
 myCunpack = C.unpack
@@ -60,14 +72,14 @@ readFields = map (readField . (`C.append` (C.pack "\r\n"))) . C.lines
 -}
 
 readEmail :: B.ByteString -> Email
-readEmail !orig = maybe (error "readEmail: parse error") id $ splitAtNlNl 0 orig
+readEmail !orig = mkEmail $ maybe (error "readEmail: parse error") id $ splitAtNlNl 0 orig
   where splitAtNlNl !count !input = do
           off <- (+1) <$> C.elemIndex '\n' input
           let i' = C.drop off input
           if C.head i' == '\n'
-           then Just $ mkEmail (C.take (off + count) orig) (C.tail i')
+           then Just (C.take (off + count) orig, C.tail i')
            else splitAtNlNl (off + count) i'
-        mkEmail flds body =
+        mkEmail ~(flds, body) =
           Email { emailFields = headers
                 , emailContent = parseMIMEBody optional_headers (myCunpack body)
                 , rawEmail = orig }
@@ -77,9 +89,16 @@ readEmail !orig = maybe (error "readEmail: parse error") id $ splitAtNlNl 0 orig
 ellipse :: Int -> String -> String
 ellipse n s = take n s ++ "..."
 
-showEmail :: ShowFormat -> Email -> String
-showEmail OneLinerDebug (msg@(Email flds content _)) =
+showEmailAsOneLinerDebug :: Email -> String
+showEmailAsOneLinerDebug (msg@(Email flds content _)) =
           take 30 (show (mimeType $ mime_val_type content) ++ repeat ' ') ++ " Subject: " ++
           head ([show subject | Subject subject <- flds ]
               ++ ["(malformed subject) " ++ show subject | OptionalField "Subject" subject <- flds ]
               ++ ["no subject, body: " ++ ellipse 40 (show msg)])
+
+fmtOpt :: (forall err. String -> err) -> (ShowFormat -> a) -> OptDescr a
+fmtOpt usage f = Option ['f'] ["fmt"] (ReqArg (f . parseFmt) "FMT") desc
+  where parseFmt = maybe (usage "Bad display format") id . (`lookup` fmts)
+        fmts = map (show &&& id) showFmts
+        desc = "Choose the display format " ++ show (map fst fmts)
+
