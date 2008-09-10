@@ -11,26 +11,34 @@
 --------------------------------------------------------------------
 
 {-# LANGUAGE BangPatterns #-}
-module Mbox.ByteString.Lazy (parseMbox,printMbox,fromQuoting) where
+{-# LANGUAGE FlexibleInstances #-}
+module Mbox.ByteString.Lazy
+  ( Direction(..)
+  , parseMbox
+  , safeParseMbox
+  , printMbox
+  , printMboxMessage
+  , fromQuoting
+  ) where
 
 import Mbox (Mbox(..), MboxMessage(..))
-import Control.Arrow ((***),first)
+import Control.Arrow (first,second)
 import Control.Applicative ((<$>))
 import qualified Data.ByteString.Lazy.Char8 as C -- Char8 interface over Lazy ByteString's
 import Data.ByteString.Lazy (ByteString)
 import Data.Int (Int64)
+import System.IO
 
 --import Test.QuickCheck
---import QuickCheckUtils
 
 nextFrom :: ByteString -> Maybe (ByteString, ByteString)
 nextFrom !orig = goNextFrom 0 orig
    where goNextFrom !count !input = do
            off <- (+1) <$> C.elemIndex '\n' input
-           let i' = C.drop off input
+           let (nls, i') = first C.length $ C.span (=='\n') $ C.drop off input
            if C.take 5 i' == bFrom
-            then Just (C.take (off + count) orig, C.drop 5 i')
-            else goNextFrom (off + count) i'
+            then Just (C.take (off + count + (nls - 1)) orig, C.drop 5 i')
+            else goNextFrom (off + count + nls) i'
 
 {-
 Quoted from http://qmail.org./man/man5/mbox.html:
@@ -70,6 +78,8 @@ fromQuoting onLevel = C.tail . nextQuotedFrom . C.cons '\n'
 
 {-
 prop_fromQuotingInv (NonNegative n) s = s == fromQuoting (+(-n)) (fromQuoting (+n) s)
+prop_unparse_parse m = either (const False) (==m) $ safeParseMbox (printMbox m)
+prop_parse_unparse m = let s = printMbox m in Right s == (printMbox <$> safeParseMbox s)
 
 -- | Prefered xs: have the xs elements as favorites.
 newtype Prefered a = Prefered { unPrefered :: a }
@@ -92,6 +102,16 @@ instance (Favorites a, Arbitrary a) => Arbitrary (Prefered a) where
       ]
 
   shrink (Prefered x) = Prefered `fmap` shrink x
+
+--instance Arbitrary s => Arbitrary (MboxMessage s) where
+instance Arbitrary (MboxMessage ByteString) where
+  arbitrary = MboxMessage (C.pack "S") (C.pack "D") <$> arbitrary -- TODO better sender,time
+  shrink (MboxMessage x y z) = [ MboxMessage x' y' z' | (x', y', z') <- shrink (x, y, z) ]
+
+instance Arbitrary (Mbox ByteString) where
+--instance Arbitrary s => Arbitrary (Mbox s) where
+  arbitrary = Mbox <$> arbitrary
+  shrink (Mbox x) = Mbox <$> shrink x
 -}
 
 mkQuotedFrom :: Int64 -> C.ByteString
@@ -102,25 +122,38 @@ mkQuotedFrom n | n < 0     = error "mkQuotedFrom: negative quoting"
 bFrom :: ByteString
 bFrom = C.pack "From "
 
-skipFirstFrom :: ByteString -> ByteString
-skipFirstFrom xs | bFrom == C.take 5 xs = C.drop 5 xs
-                 | otherwise = error "skipFirstFrom: badly formatted mbox: 'From ' expected at the beginning"
+skipFirstFrom :: ByteString -> Either String ByteString
+skipFirstFrom xs | bFrom == C.take 5 xs = Right $ C.drop 5 xs
+                 | otherwise = Left "skipFirstFrom: badly formatted mbox: 'From ' expected at the beginning"
+
+safeParseMbox :: ByteString -> Either String (Mbox ByteString)
+safeParseMbox s | C.null s  = Right $ Mbox []
+                | otherwise = (Mbox . map finishMboxMessageParsing . splitMboxMessages) <$> (skipFirstFrom s)
 
 parseMbox :: ByteString -> Mbox ByteString
-parseMbox = Mbox . go . skipFirstFrom
-  where go !input =
-          case nextFrom input of
-            Nothing -> if C.null input then [] else [finishMboxMessageParsing input]
-            Just (msg, rest) -> finishMboxMessageParsing msg : go rest
-        finishMboxMessageParsing inp = MboxMessage sender time (fromQuoting pred body)
-            where ((sender,time),body) = C.break (==' ') *** C.tail $ C.break (=='\n') inp
+parseMbox = either error id . safeParseMbox
+
+splitMboxMessages :: ByteString -> [ByteString]
+splitMboxMessages !input =
+  case nextFrom input of
+    Nothing | C.null input -> []
+            | otherwise    -> [input]
+    Just (!msg, rest)      -> msg : splitMboxMessages rest
+
+finishMboxMessageParsing :: ByteString -> MboxMessage ByteString
+finishMboxMessageParsing !inp = MboxMessage sender time (fromQuoting pred body)
+  where ((sender,time),body) = first (breakAt ' ') $ breakAt '\n' inp
+        breakAt c = second (C.drop 1 {- a safe tail -}) . C.break (==c)
 
 printMbox :: Mbox ByteString -> ByteString
-printMbox = C.concat . map printMsg . unMbox
-  where printMsg (MboxMessage sender time body) =
-          C.append bFrom
-          $ C.append sender
-          $ C.cons   ' '
-          $ C.append time
-          $ C.cons   '\n'
-          $ C.snoc   body '\n'
+printMbox = C.intercalate (C.pack "\n") . map printMboxMessage . unMbox
+
+printMboxMessage :: MboxMessage ByteString -> ByteString
+printMboxMessage (MboxMessage sender time body) =
+  C.append bFrom
+    $ C.append sender
+    $ C.cons   ' '
+    $ C.append time
+    $ C.cons   '\n'
+    $ fromQuoting (+1) body
+
