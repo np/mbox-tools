@@ -12,7 +12,7 @@
 
 import Mbox (unMbox, mboxMsgBody)
 import Mbox.ByteString.Lazy (parseMbox)
-import Email (Email(..),ShowFormat(..),readEmail,showEmail)
+import Email (Email(..),readEmail,showEmailAsOneLinerDebug)
 import qualified Data.ByteString.Lazy as B (readFile)
 import System.Environment (getArgs)
 import Text.Parsec (parse)
@@ -37,9 +37,8 @@ main :: IO ()
 main = do
   [queryString,mbox] <- getArgs
   let query = either (error "malformed query") id $ parse parseQuery "<first-argument>" queryString
-  let fmt = OneLinerDebug
   input <- B.readFile mbox
-  mapM_ (putStrLn . showEmail fmt)
+  mapM_ (putStrLn . showEmailAsOneLinerDebug)
     $ filter (emailMatchQuery query)
     $ map (readEmail . mboxMsgBody) . unMbox . parseMbox
     $ input
