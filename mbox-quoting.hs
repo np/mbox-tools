@@ -4,6 +4,7 @@ import Control.Applicative ((<$>))
 import System.Environment (getArgs)
 import System.IO (hPutStrLn,stderr)
 
+main :: IO ()
 main = do
   args <- getArgs
   case args of
