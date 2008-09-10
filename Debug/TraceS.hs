@@ -10,7 +10,9 @@
 --
 --------------------------------------------------------------------
 
-module Debug.TraceS (traceS) where
+module Debug.TraceS (trace,traceS) where
+
+import Debug.Trace (trace)
 
 traceS :: Show a => a -> a
 traceS x = trace (show x) x
