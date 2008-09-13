@@ -14,11 +14,13 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Mbox.ByteString.Lazy
   ( Direction(..)
+  , parseMboxFile
   , parseMbox
   , safeParseMbox
   , printMbox
   , printMboxMessage
   , fromQuoting
+  , readRevMboxFile
   ) where
 
 import Mbox (Mbox(..), MboxMessage(..))
@@ -157,3 +159,55 @@ printMboxMessage (MboxMessage sender time body) =
     $ C.cons   '\n'
     $ fromQuoting (+1) body
 
+readRevMboxFile :: FilePath -> IO (Mbox ByteString)
+readRevMboxFile fn = readRevMboxHandle =<< openFile fn ReadMode
+
+-- | @readRevMboxHandle h@ returns a reversed mbox for a file handle.
+-- The file handle is supposed to be in text mode, readable.
+-- buffering?
+readRevMboxHandle :: Handle -> IO (Mbox ByteString)
+readRevMboxHandle fh = readRevMbox <$> readHandleBackward fh
+
+readRevMbox :: [ByteString] -> Mbox ByteString
+readRevMbox chunks = Mbox $ go (filter (not . C.null) chunks)
+  where go []          = []
+        go (chunk1:cs) =
+                  case nextFrom chunk1 of
+                    Nothing           -> kont cs chunk1
+                    Just (!msg, rest) ->
+                      (map finishMboxMessageParsing . reverse . splitMboxMessages $ rest) ++ kont cs msg
+
+        kont []           = (:[]) . finishLast
+        kont (chunk2:cs2) = \k -> go (chunk2 `C.append` k : cs2)
+
+        finishLast = either (error . ("readRevMboxHandle: impossible: " ++)) finishMboxMessageParsing
+                   . skipFirstFrom
+
+{-
+propIO_read_anydir fh =
+   do xs <- hGetContent fh
+      ys <- readHandleBackward fh
+      xs == C.concat (reverse ys)
+-}
+readHandleBackward :: Handle -> IO [ByteString]
+readHandleBackward fh = hFileSize fh >>= go
+  where go 0    = return []
+        go !siz =
+          do let delta = min mboxChunkSize siz
+                 siz'  = siz - delta
+             hSeek fh AbsoluteSeek siz'
+             s <- C.hGet fh $ fromInteger delta
+             (s :) <$> go siz'
+
+data Direction = Backward | Forward
+
+parseMboxFile :: Direction -> FilePath -> IO (Mbox ByteString)
+parseMboxFile Forward  = (either fail return =<<) . (safeParseMbox <$>) . C.readFile
+parseMboxFile Backward = readRevMboxFile
+
+mboxChunkSize :: Integer
+mboxChunkSize = 10*oneMegabyte
+
+-- one megabyte in bytes
+oneMegabyte :: Integer
+oneMegabyte = 2 ^ (20 :: Int)
