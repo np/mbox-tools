@@ -11,14 +11,61 @@
 --------------------------------------------------------------------
 
 import Mbox (unMbox,mboxMsgBody)
-import Mbox.ByteString.Lazy (parseMbox)
-import Email (readEmail,showEmail,ShowFormat(..))
-import qualified Data.ByteString.Lazy as B (readFile)
+import Mbox.ByteString.Lazy (Direction(..),parseMboxFile,printMbox)
+import Email (readEmail,showEmailAsOneLinerDebug,ShowFormat(..),fmtOpt)
+import qualified Data.ByteString.Lazy as B
 import System.Environment (getArgs)
+import System.Console.GetOpt
+
+flipDir :: Settings -> Settings
+flipDir s = s { dir = opposite $ dir s }
+  where opposite Backward = Forward
+        opposite Forward  = Backward
+
+data Settings = Settings { fmt  :: ShowFormat
+                         , dir  :: Direction
+                         , help :: Bool
+                         }
+type Flag = Settings -> Settings
+
+defaultSettings :: Settings
+defaultSettings = Settings { fmt  = OneLinerDebug
+                           , dir  = Forward
+                           , help = False
+                           }
+
+setFmt :: ShowFormat -> Settings -> Settings
+setFmt f s = s { fmt = f }
+
+setHelp :: Settings -> Settings
+setHelp s = s { help = True }
+
+usage :: String -> a
+usage msg = error (msg ++ "\n" ++ usageInfo header options)
+  where header = "Usage: mbox-list [OPTION...] files..."
+
+options :: [OptDescr Flag]
+options =
+  [ fmtOpt usage setFmt
+  , Option ['r'] ["reverse"] (NoArg flipDir) "Reverse the mbox order (latest firsts)"
+  , Option ['?'] ["help"]    (NoArg setHelp) "Show this help message"
+  ]
 
 main :: IO ()
 main = do
-  [arg] <- getArgs
-  let fmt = OneLinerDebug
-  mapM_ (putStrLn . showEmail fmt . readEmail . mboxMsgBody) . unMbox . parseMbox =<< B.readFile arg
+  args <- getArgs
+  let (flags, nonopts, errs) = getOpt Permute options args
+  let opts = foldr ($) defaultSettings flags
+  if help opts
+   then usage ""
+   else
+    case (nonopts, errs) of
+      ([mboxfile], []) -> do
+        mbox <- parseMboxFile (dir opts) mboxfile
+        case fmt opts of
+          MboxFmt       -> B.putStr $ printMbox mbox
+          OneLinerDebug -> mapM_ (putStrLn . showEmailAsOneLinerDebug . readEmail . mboxMsgBody) . unMbox $ mbox
+      ([], [])     -> usage "Too few arguments"
+      (_,  [])     -> usage "Too much arguments"
+      (_,  _)      -> usage (concat errs)
 
