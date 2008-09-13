@@ -30,6 +30,7 @@ import qualified Data.ByteString.Lazy.Char8 as C -- Char8 interface over Lazy By
 import Data.ByteString.Lazy (ByteString)
 import Data.Int (Int64)
 import System.IO
+import System.IO.Unsafe (unsafeInterleaveIO)
 
 --import Test.QuickCheck
 
@@ -183,6 +184,10 @@ readRevMbox chunks = Mbox $ go (filter (not . C.null) chunks)
         finishLast = either (error . ("readRevMboxHandle: impossible: " ++)) finishMboxMessageParsing
                    . skipFirstFrom
 
+-- | @readHandleBackward h@ lazily reads a file handle from the end of the
+-- file. The file contents is returned as a reversed list of chunks.
+-- The result is such that if one apply @C.concat . reverse@ one get
+-- the in-order contents.
 {-
 propIO_read_anydir fh =
    do xs <- hGetContent fh
@@ -191,8 +196,8 @@ propIO_read_anydir fh =
 -}
 readHandleBackward :: Handle -> IO [ByteString]
 readHandleBackward fh = hFileSize fh >>= go
-  where go 0    = return []
-        go !siz =
+  where go 0   = return []
+        go siz = unsafeInterleaveIO $
           do let delta = min mboxChunkSize siz
                  siz'  = siz - delta
              hSeek fh AbsoluteSeek siz'
