@@ -17,6 +17,13 @@ import qualified Data.ByteString.Lazy as B
 import System.Environment (getArgs)
 import System.Console.GetOpt
 
+listMbox :: Settings -> String -> IO ()
+listMbox opts mboxfile = do
+  mbox <- parseMboxFile (dir opts) mboxfile
+  case fmt opts of
+    MboxFmt       -> B.putStr $ printMbox mbox
+    OneLinerDebug -> mapM_ (putStrLn . showEmailAsOneLinerDebug . readEmail . mboxMsgBody) . unMbox $ mbox
+
 flipDir :: Settings -> Settings
 flipDir s = s { dir = opposite $ dir s }
   where opposite Backward = Forward
@@ -42,7 +49,7 @@ setHelp s = s { help = True }
 
 usage :: String -> a
 usage msg = error (msg ++ "\n" ++ usageInfo header options)
-  where header = "Usage: mbox-list [OPTION...] files..."
+  where header = "Usage: mbox-list [OPTION...] mbox-files..."
 
 options :: [OptDescr Flag]
 options =
@@ -60,12 +67,7 @@ main = do
    then usage ""
    else
     case (nonopts, errs) of
-      ([mboxfile], []) -> do
-        mbox <- parseMboxFile (dir opts) mboxfile
-        case fmt opts of
-          MboxFmt       -> B.putStr $ printMbox mbox
-          OneLinerDebug -> mapM_ (putStrLn . showEmailAsOneLinerDebug . readEmail . mboxMsgBody) . unMbox $ mbox
-      ([], [])     -> usage "Too few arguments"
-      (_,  [])     -> usage "Too much arguments"
-      (_,  _)      -> usage (concat errs)
+      ([],        []) -> usage "Too few arguments"
+      (mboxfiles, []) -> mapM_ (listMbox opts) mboxfiles
+      (_,          _) -> usage (concat errs)
 
