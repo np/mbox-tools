@@ -102,3 +102,7 @@ fmtOpt usage f = Option ['f'] ["fmt"] (ReqArg (f . parseFmt) "FMT") desc
         fmts = map (show &&& id) showFmts
         desc = "Choose the display format " ++ show (map fst fmts)
 
+putEmails :: ShowFormat -> [(Email,MboxMessage B.ByteString)] -> IO ()
+putEmails OneLinerDebug = mapM_ (putStrLn . showEmailAsOneLinerDebug . fst)
+putEmails MboxFmt       = B.putStr . printMbox . Mbox . map snd
+
