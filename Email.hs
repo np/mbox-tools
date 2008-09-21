@@ -83,7 +83,7 @@ readEmail !orig = mkEmail $ maybe (error "readEmail: parse error") id $ splitAtN
            else splitAtNlNl (off + count) i'
         mkEmail ~(flds, body) =
           Email { emailFields = headers
-                , emailContent = parseMIMEBody optional_headers (myCunpack body)
+                , emailContent = parseMIMEBody optional_headers (fixCrlfS $ myCunpack body)
                 , rawEmail = orig }
           where headers = readFields flds
                 optional_headers = [ (k,v) | OptionalField k v <- headers ]
