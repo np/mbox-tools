@@ -11,7 +11,7 @@
 --------------------------------------------------------------------
 
 import Mbox (Mbox(..), MboxMessage(..))
-import Mbox.ByteString.Lazy (parseMboxFile, Direction(..), printMbox)
+import Mbox.ByteString.Lazy (parseMboxFile, Direction(..))
 import Email (Email(..),ShowFormat(..),fmtOpt,readEmail,putEmails)
 import System.Environment (getArgs)
 import Text.Parsec (parse)
