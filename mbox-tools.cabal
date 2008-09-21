@@ -32,7 +32,7 @@ Library
         Build-depends: base>=3.0, containers>=0.1
     Build-depends: bytestring>=0.9, parsec>=3.0.0, mtl>=1.1.0.1, hsemail>=1.4, mime>=0.2.1, hutt>=0.1
                    -- hsemail-1.4, mime-0.2.1, hutt-0.1 are not yet released
-    Exposed-Modules: Mbox, Mbox.ByteString.Lazy, Email
+    Exposed-Modules: Mbox, Mbox.ByteString.Lazy, Email, EOL
     Other-Modules:
     ghc-options: -Wall
 
