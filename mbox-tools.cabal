@@ -15,9 +15,12 @@ Homepage:       ...
 Stability:      Experimental
 Build-Type:     Simple
 
+flag use_hutt
+  Default: False
+
 Library
     Build-depends: base>=3.0, containers>=0.1, bytestring>=0.9, parsec>=3.0.0,
-                   mtl>=1.1.0.1, hsemail>=1.4, mime>=0.2.1, data-accessor>=0.1.4, hutt>=0.1
+                   mtl>=1.1.0.1, hsemail>=1.4, mime>=0.2.1, data-accessor>=0.1.4
                    -- hsemail-1.4, mime-0.2.1, hutt-0.1 are not yet released
     Exposed-Modules: Mbox, Mbox.ByteString.Lazy, Email, EOL
     Other-Modules:
@@ -42,3 +45,6 @@ executable mbox-list
 executable mbox-grep
     main-is: mbox-grep.hs
     ghc-options: -Wall
+  if !(flag (use_hutt))
+    build-depends: hutt>=0.1
+    buildable: False
