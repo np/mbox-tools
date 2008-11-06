@@ -19,6 +19,7 @@ module Mbox.ByteString.Lazy
   , safeParseMbox
   , printMbox
   , printMboxMessage
+  , printMboxFromLine
   , fromQuoting
   , readRevMboxFile
   ) where
@@ -151,14 +152,17 @@ finishMboxMessageParsing !inp = MboxMessage sender time (fromQuoting pred body)
 printMbox :: Mbox ByteString -> ByteString
 printMbox = C.intercalate (C.pack "\n") . map printMboxMessage . unMbox
 
-printMboxMessage :: MboxMessage ByteString -> ByteString
-printMboxMessage (MboxMessage sender time body) =
+printMboxFromLine :: MboxMessage ByteString -> ByteString
+printMboxFromLine (MboxMessage sender time _) =
   C.append bFrom
     $ C.append sender
     $ C.cons   ' '
     $ C.append time
     $ C.cons   '\n'
-    $ fromQuoting (+1) body
+    $ C.empty
+
+printMboxMessage :: MboxMessage ByteString -> ByteString
+printMboxMessage msg = printMboxFromLine msg `C.append` fromQuoting (+1) (mboxMsgBody msg)
 
 readRevMboxFile :: FilePath -> IO (Mbox ByteString)
 readRevMboxFile fn = readRevMboxHandle =<< openFile fn ReadMode

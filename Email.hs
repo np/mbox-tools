@@ -26,16 +26,17 @@ import Text.Parsec.Prim (parse)
 import EOL (fixCrlfS) -- fixCrlfB
 import System.Console.GetOpt (OptDescr(..),ArgDescr(..))
 import Mbox
-import Mbox.ByteString.Lazy (printMbox)
+import Mbox.ByteString.Lazy (printMbox,printMboxFromLine)
 
 data Email = Email { emailFields  :: [Field]
                    , emailContent :: MIMEValue
-                   , rawEmail :: B.ByteString
+                   , rawEmail     :: B.ByteString
                    }
   deriving (Show)
 
 data ShowFormat = OneLinerDebug
                 | MboxFmt
+                | MboxFrom
   deriving (Eq,Enum)
 
 showFmts :: [ShowFormat]
@@ -44,6 +45,7 @@ showFmts = [ OneLinerDebug .. ] -- since OneLinerDebug is the first
 instance Show ShowFormat where
   show OneLinerDebug = "one"
   show MboxFmt       = "mbox"
+  show MboxFrom      = "from"
 
 myCunpack :: C.ByteString -> String
 myCunpack = C.unpack
@@ -107,4 +109,5 @@ fmtOpt usage f = Option ['f'] ["fmt"] (ReqArg (f . parseFmt) "FMT") desc
 putEmails :: ShowFormat -> [(Email,MboxMessage B.ByteString)] -> IO ()
 putEmails OneLinerDebug = mapM_ (putStrLn . showEmailAsOneLinerDebug . fst)
 putEmails MboxFmt       = B.putStr . printMbox . Mbox . map snd
+putEmails MboxFrom      = mapM_ (B.putStr . printMboxFromLine . snd)
 
