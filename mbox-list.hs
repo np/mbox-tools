@@ -10,19 +10,16 @@
 --
 --------------------------------------------------------------------
 
-import Mbox (unMbox,mboxMsgBody)
-import Mbox.ByteString.Lazy (Direction(..),parseMboxFile,printMbox)
-import Email (readEmail,showEmailAsOneLinerDebug,ShowFormat(..),fmtOpt)
-import qualified Data.ByteString.Lazy as B
+import Control.Arrow
+import Mbox (Mbox(..),mboxMsgBody)
+import Mbox.ByteString.Lazy (Direction(..),parseMboxFile)
+import Email (readEmail,putEmails,ShowFormat(..),fmtOpt)
 import System.Environment (getArgs)
 import System.Console.GetOpt
 
 listMbox :: Settings -> String -> IO ()
-listMbox opts mboxfile = do
-  mbox <- parseMboxFile (dir opts) mboxfile
-  case fmt opts of
-    MboxFmt       -> B.putStr $ printMbox mbox
-    OneLinerDebug -> mapM_ (putStrLn . showEmailAsOneLinerDebug . readEmail . mboxMsgBody) . unMbox $ mbox
+listMbox opts mboxfile =
+  putEmails (fmt opts) . map ((readEmail . mboxMsgBody) &&& id) . unMbox =<< parseMboxFile (dir opts) mboxfile
 
 flipDir :: Settings -> Settings
 flipDir s = s { dir = opposite $ dir s }
