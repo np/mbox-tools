@@ -45,6 +45,7 @@ executable mbox-list
 executable mbox-grep
     main-is: mbox-grep.hs
     ghc-options: -Wall
-  if !(flag (use_hutt))
+  if flag(use_hutt)
     build-depends: hutt>=0.1
+  else
     buildable: False
