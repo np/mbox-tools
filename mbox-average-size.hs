@@ -1,6 +1,5 @@
-import Mbox (Mbox(..), MboxMessage(..))
+import Mbox (Mbox(..), MboxMessage(..), parseMbox)
 import Control.Applicative ((<$>))
-import Mbox.ByteString.Lazy (parseMbox)
 import Data.List (foldl')
 import qualified Data.ByteString.Lazy as B
 

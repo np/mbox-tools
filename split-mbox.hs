@@ -12,8 +12,7 @@
 --------------------------------------------------------------------
 
 import Control.Arrow
-import Mbox (Mbox(..),MboxMessage,mboxMsgTime)
-import Mbox.ByteString.Lazy (Direction(..),parseMboxFile,printMbox)
+import Mbox (Mbox(..),MboxMessage,Direction(..),msgYear,msgMonthYear,parseMboxFile,printMbox)
 import qualified Data.ByteString.Lazy.Char8 as C
 import Data.Char (toLower)
 import Data.List (groupBy)
@@ -28,44 +27,7 @@ chunks :: Int -> [a] -> [[a]]
 chunks _ [] = []
 chunks n xs = uncurry (:) $ second (chunks n) $ splitAt n xs
 
-type Msg = MboxMessage C.ByteString
-
-readYear :: Msg -> C.ByteString -> Int
-readYear m s =
- case reads $ C.unpack s of
-   [(i, "")] -> i
-   _         -> error ("readYear: badly formatted date (year) in " ++ show (C.unpack $ mboxMsgTime m))
-
-data Month = Jan
-           | Feb
-           | Mar
-           | Apr
-           | May
-           | Jun
-           | Jul
-           | Aug
-           | Sep
-           | Oct
-           | Nov
-           | Dec
-  deriving (Read, Show, Eq)
-
-readMonth :: Msg -> C.ByteString -> Month
-readMonth m s =
-  case reads $ C.unpack s of
-    [(month, "")] -> month
-    _             -> error ("readMonth: badly formatted date (month) in " ++ show (C.unpack $ mboxMsgTime m))
-
-msgYear :: Msg -> Int
-msgYear m = readYear m . last . C.split ' ' . mboxMsgTime $ m
-
-msgMonthYear :: Msg -> (Month,Int)
-msgMonthYear m =
- case filter (not . C.null) . C.split ' ' . mboxMsgTime $ m of
-   [_wday, month, _mday, _hour, year] -> (readMonth m month, readYear m year)
-   _ -> error ("msgMonthYear: badly formatted date in " ++ show (C.unpack $ mboxMsgTime m))
-
-splitMbox :: Eq a => (Msg -> a) -> (Msg -> String) -> String -> IO ()
+splitMbox :: Eq a => (MboxMessage C.ByteString -> a) -> (MboxMessage C.ByteString -> String) -> String -> IO ()
 splitMbox keyMsg fmtMsg mboxfile =
   -- this 'chunks' trick is to avoid a lazyness problem
   mapM_ go . concatMap (groupBy (equating keyMsg)) . chunks 1000 . unMbox =<< parseMboxFile Forward mboxfile

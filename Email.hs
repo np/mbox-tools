@@ -25,8 +25,7 @@ import Text.Parsec.ByteString.Lazy ()
 import Text.Parsec.Prim (parse)
 import EOL (fixCrlfS) -- fixCrlfB
 import System.Console.GetOpt (OptDescr(..),ArgDescr(..))
-import Mbox
-import Mbox.ByteString.Lazy (printMbox,printMboxFromLine)
+import Mbox (Mbox(Mbox), MboxMessage, printMbox, printMboxFromLine)
 
 data Email = Email { emailFields  :: [Field]
                    , emailContent :: MIMEValue

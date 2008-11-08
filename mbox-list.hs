@@ -11,8 +11,7 @@
 --------------------------------------------------------------------
 
 import Control.Arrow
-import Mbox (Mbox(..),mboxMsgBody)
-import Mbox.ByteString.Lazy (Direction(..),parseMboxFile)
+import Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody)
 import Email (readEmail,putEmails,ShowFormat(..),fmtOpt)
 import System.Environment (getArgs)
 import System.Console.GetOpt

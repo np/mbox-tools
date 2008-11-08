@@ -1,6 +1,6 @@
-import Mbox (unMbox)
-import Mbox.ByteString.Lazy (parseMbox)
+import Mbox (unMbox,parseMbox)
 import qualified Data.ByteString.Lazy as B
 
 main :: IO ()
-main = (print . length . unMbox . parseMbox) =<< B.getContents
+main = do putStrLn "Reading from stdin..."
+          (print . length . unMbox . parseMbox) =<< B.getContents
