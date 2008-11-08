@@ -49,3 +49,6 @@ executable mbox-grep
     build-depends: hutt>=0.1
   else
     buildable: False
+executable split-mbox
+    main-is: split-mbox.hs
+    ghc-options: -Wall -prof
