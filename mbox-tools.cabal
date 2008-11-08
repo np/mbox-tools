@@ -17,14 +17,23 @@ Build-Type:     Simple
 
 flag use_hutt
   Default: False
+  -- hutt-0.1 is not released
+
+flag use_hsemail
+  Default: False
+  -- hsemail-1.4 is not released
 
 Library
     Build-depends: base>=3.0, containers>=0.1, bytestring>=0.9, parsec>=3.0.0,
-                   mtl>=1.1.0.1, hsemail>=1.4, mime>=0.2.1, data-accessor>=0.1.4
-                   -- hsemail-1.4, mime-0.2.1, hutt-0.1 are not yet released
-    Exposed-Modules: Mbox, Email, EOL
+                   mtl>=1.1.0.1, mime>=0.2.1, data-accessor>=0.1.4
+                   -- mime-0.2.1 is not yet released
+
+    Exposed-Modules: Mbox, EOL
     Other-Modules:
     ghc-options: -Wall
+  if flag(use_hsemail)
+    build-depends: hsemail>=1.4
+    Exposed-Modules: Email
 
 executable mbox-counting
     main-is: mbox-counting.hs
@@ -42,11 +51,15 @@ executable redact-mbox
 executable mbox-list
     main-is: mbox-list.hs
     ghc-options: -Wall
+  if flag(use_hsemail)
+    build-depends: hsemail>=1.4
+  else
+    buildable: False
 executable mbox-grep
     main-is: mbox-grep.hs
     ghc-options: -Wall
-  if flag(use_hutt)
-    build-depends: hutt>=0.1
+  if flag(use_hutt) && flag(use_hsemail)
+    build-depends: hutt>=0.1, hsemail>=1.4
   else
     buildable: False
 executable split-mbox
