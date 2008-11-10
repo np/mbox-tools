@@ -16,4 +16,5 @@ mboxAverageSize :: Mbox B.ByteString -> Double
 mboxAverageSize = average . map (fromIntegral . B.length . mboxMsgBody) . unMbox
 
 main :: IO ()
-main = print =<< (mboxAverageSize . parseMbox) <$> B.getContents
+main = do putStrLn "Reading from stdin..."
+          print =<< (mboxAverageSize . parseMbox) <$> B.getContents
