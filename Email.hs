@@ -79,8 +79,8 @@ readEmail !orig = mkEmail $ maybe (error "readEmail: parse error") id $ splitAtN
   where splitAtNlNl !count !input = do
           off <- (+1) <$> C.elemIndex '\n' input
           let i' = C.drop off input
-          if C.head i' == '\n'
-           then Just (C.take (off + count) orig, C.tail i')
+          if C.null i' || C.head i' == '\n'
+           then Just (C.take (off + count) orig, C.drop 1 i')
            else splitAtNlNl (off + count) i'
         mkEmail ~(flds, body) =
           Email { emailFields = headers
