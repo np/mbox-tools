@@ -21,8 +21,7 @@ import qualified Data.ByteString.Lazy as B
 import Codec.MIME.Type (MIMEValue(..), Type(..))
 import Codec.MIME.Parse (parseMIMEBody)
 import Text.ParserCombinators.Parsec.Rfc2822 (Field(..), fields)
-import Text.Parsec.ByteString.Lazy ()
-import Text.Parsec.Prim (parse)
+import Text.ParserCombinators.Parsec (parse)
 import EOL (fixCrlfS) -- fixCrlfB
 import System.Console.GetOpt (OptDescr(..),ArgDescr(..))
 import Mbox (Mbox(Mbox), MboxMessage, printMbox, printMboxFromLine)
