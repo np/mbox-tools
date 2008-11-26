@@ -213,7 +213,7 @@ finishMboxMessageParsing !inp = MboxMessage sender time (fromQuoting pred body)
 
 -- | Turns an mbox into a ByteString
 printMbox :: Mbox ByteString -> ByteString
-printMbox = C.intercalate (C.pack "\n") . map printMboxMessage . unMbox
+printMbox = C.intercalate (C.singleton '\n') . map printMboxMessage . unMbox
 
 -- | Returns an header line in mbox format given an mbox message.
 printMboxFromLine :: MboxMessage ByteString -> ByteString
