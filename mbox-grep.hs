@@ -10,7 +10,7 @@
 --
 --------------------------------------------------------------------
 
-import Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFile)
+import Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFiles)
 import Email (Email(..),ShowFormat(..),fmtOpt,defaultShowFormat,readEmail,putEmails,showFormatsDoc)
 import System.Environment (getArgs)
 import Text.ParserCombinators.Parsec (parse)
@@ -20,14 +20,13 @@ import Data.Tree (Tree(..))
 import Control.Arrow
 import System.Console.GetOpt
 
-grepMbox :: Settings -> String -> String -> IO ()
-grepMbox opts mbox queryString = do
-  let query = either (error "malformed query") id $ parse parseQuery "<first-argument>" queryString
-  input <- parseMboxFile (dir opts) mbox
-  putEmails (fmt opts)
-    $ filter (emailMatchQuery query . fst)
-    $ map ((readEmail . mboxMsgBody) &&& id) . unMbox
-    $ input
+grepMbox :: Settings -> String -> [String] -> IO ()
+grepMbox opts queryString = (mapM_ f =<<) . parseMboxFiles (dir opts)
+  where query = either (error "malformed query") id $ parse parseQuery "<first-argument>" queryString
+        f =
+          putEmails (fmt opts)
+            . filter (emailMatchQuery query . fst)
+            . (map ((readEmail . mboxMsgBody) &&& id) . unMbox)
 
 emailMatchQuery :: Query -> Email -> Bool
 emailMatchQuery query email = evalQueryMsg id dsc msg query
@@ -52,9 +51,8 @@ main = do
    then usage ""
    else
     case (nonopts, errs) of
-      ([],                  []) -> usage "Too few arguments"
-      ([mbox, queryString], []) -> grepMbox opts mbox queryString
-      (_,                   []) -> usage "Too many arguments"
+      (queryString : files, []) -> grepMbox opts queryString files
+      (_,                   []) -> usage "Too few arguments"
       _                         -> usage (concat errs)
 
 flipDir :: Settings -> Settings
@@ -82,7 +80,7 @@ setHelp s = s { help = True }
 
 usage :: String -> a
 usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
-  where header = "Usage: mbox-grep [OPTION...] <mbox-file> <query>"
+  where header = "Usage: mbox-grep [OPTIONS] <query> <mbox-file>*"
 
 options :: [OptDescr Flag]
 options =
