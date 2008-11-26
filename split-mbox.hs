@@ -28,9 +28,10 @@ chunks _ [] = []
 chunks n xs = uncurry (:) $ second (chunks n) $ splitAt n xs
 
 splitMbox :: Eq a => (MboxMessage C.ByteString -> a) -> (MboxMessage C.ByteString -> String) -> String -> IO ()
-splitMbox keyMsg fmtMsg mboxfile =
+splitMbox keyMsg fmtMsg mboxfile = do
   -- this 'chunks' trick is to avoid a lazyness problem
   mapM_ go . concatMap (groupBy (equating keyMsg)) . chunks 1000 . unMbox =<< parseMboxFile Forward mboxfile
+  putStrLn "done."
   where go ms = do let !fp = "mbox-" ++ (fmtMsg $ head ms)
                    putStr ("\rWriting to " ++ fp ++ "...")
                    hFlush stdout
