@@ -20,6 +20,7 @@ module Mbox
   , mboxMsgTimeA
   , mboxMsgBodyA
   , parseMboxFile
+  , parseMboxFiles
   , parseMbox
   , safeParseMbox
   , printMbox
@@ -278,6 +279,12 @@ data Direction = Backward | Forward
 parseMboxFile :: Direction -> FilePath -> IO (Mbox ByteString)
 parseMboxFile Forward  = (either fail return =<<) . (safeParseMbox <$>) . C.readFile
 parseMboxFile Backward = readRevMboxFile
+
+-- | Returns a mbox list given a direction (forward/backward) and a list of file path.
+--   Note that files are opened lazily.
+parseMboxFiles :: Direction -> [FilePath] -> IO [Mbox ByteString]
+parseMboxFiles _   [] = (:[]) . parseMbox <$> C.getContents
+parseMboxFiles dir xs = mapM (unsafeInterleaveIO . parseMboxFile dir) xs
 
 mboxChunkSize :: Integer
 mboxChunkSize = 10*oneMegabyte
