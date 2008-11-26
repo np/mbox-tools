@@ -23,10 +23,9 @@ import System.Console.GetOpt
 grepMbox :: Settings -> String -> [String] -> IO ()
 grepMbox opts queryString = (mapM_ f =<<) . parseMboxFiles (dir opts)
   where query = either (error "malformed query") id $ parse parseQuery "<first-argument>" queryString
-        f =
-          putEmails (fmt opts)
-            . filter (emailMatchQuery query . fst)
-            . (map ((readEmail . mboxMsgBody) &&& id) . unMbox)
+        f     = putEmails (fmt opts)
+                . filter (emailMatchQuery query . fst)
+                . map ((readEmail . mboxMsgBody) &&& id) . unMbox
 
 emailMatchQuery :: Query -> Email -> Bool
 emailMatchQuery query email = evalQueryMsg id dsc msg query
