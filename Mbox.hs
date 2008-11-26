@@ -41,9 +41,12 @@ import System.IO.Unsafe (unsafeInterleaveIO)
 
 --import Test.QuickCheck
 
-
+-- | An Mbox is a list of MboxMessage
 newtype Mbox s = Mbox { unMbox :: [MboxMessage s] }
   deriving (Eq, Ord, Show)
+
+-- | An MboxMessage represent an mbox message, featuring
+-- the sender, the date-time, and the message body.
 data MboxMessage s = MboxMessage { mboxMsgSender :: s, mboxMsgTime :: s, mboxMsgBody :: s }
   deriving (Eq, Ord, Show)
 
@@ -100,14 +103,6 @@ nextFrom !orig = goNextFrom 0 orig
             then Just (C.take (off + count + (nls - 1)) orig, C.drop 5 i')
             else goNextFrom (off + count + nls) i'
 
-{-
-Quoted from http://qmail.org./man/man5/mbox.html:
-
-  >From quoting ensures that the resulting
-  lines are not From_ lines:  the program prepends a > to any
-  From_ line, >From_ line, >>From_ line, >>>From_ line, etc.
--}
-
 -- TODO rules:
 --  - fromQuoting id == id
 --  - f . g == id ==> fromQuoting f . fromQuoting g == id
@@ -122,6 +117,13 @@ Quoted from http://qmail.org./man/man5/mbox.html:
 --   Perhaps fusing nextFrom and fromQuoting could give more performances
 --   (but will decrease performances of mbox-counting).
 
+-- | Quoted from http://qmail.org./man/man5/mbox.html:
+--
+-- @
+--   \>From quoting ensures that the resulting
+--   lines are not From_ lines:  the program prepends a \> to any
+--   From_ line, \>\From_ line, \>\>From_ line, \>\>\>From_ line, etc.
+-- @
 fromQuoting :: (Int64 -> Int64) -> C.ByteString -> C.ByteString
 fromQuoting onLevel = C.tail . nextQuotedFrom . C.cons '\n'
   where nextQuotedFrom !orig = goNextQuotedFrom 0 orig
@@ -186,10 +188,13 @@ skipFirstFrom :: ByteString -> Either String ByteString
 skipFirstFrom xs | bFrom == C.take 5 xs = Right $ C.drop 5 xs
                  | otherwise = Left "skipFirstFrom: badly formatted mbox: 'From ' expected at the beginning"
 
+-- | Same as parseMbox but cat returns an error message.
 safeParseMbox :: ByteString -> Either String (Mbox ByteString)
 safeParseMbox s | C.null s  = Right $ Mbox []
                 | otherwise = (Mbox . map finishMboxMessageParsing . splitMboxMessages) <$> (skipFirstFrom s)
 
+-- | Turns a ByteString into an Mbox by splitting on 'From' lines and
+-- unquoting the '>*From's of the message.
 parseMbox :: ByteString -> Mbox ByteString
 parseMbox = either error id . safeParseMbox
 
@@ -205,9 +210,11 @@ finishMboxMessageParsing !inp = MboxMessage sender time (fromQuoting pred body)
   where ((sender,time),body) = first (breakAt ' ') $ breakAt '\n' inp
         breakAt c = second (C.drop 1 {- a safe tail -}) . C.break (==c)
 
+-- | Turns an mbox into a ByteString
 printMbox :: Mbox ByteString -> ByteString
 printMbox = C.intercalate (C.pack "\n") . map printMboxMessage . unMbox
 
+-- | Returns an header line in mbox format given an mbox message.
 printMboxFromLine :: MboxMessage ByteString -> ByteString
 printMboxFromLine (MboxMessage sender time _) =
   C.append bFrom
@@ -217,6 +224,7 @@ printMboxFromLine (MboxMessage sender time _) =
     $ C.cons   '\n'
     $ C.empty
 
+-- | Returns a ByteString given an mbox message.
 printMboxMessage :: MboxMessage ByteString -> ByteString
 printMboxMessage msg = printMboxFromLine msg `C.append` fromQuoting (+1) (mboxMsgBody msg)
 
@@ -266,6 +274,7 @@ readHandleBackward fh = hFileSize fh >>= go
 
 data Direction = Backward | Forward
 
+-- | Returns a mbox given a direction (forward/backward) and a file path.
 parseMboxFile :: Direction -> FilePath -> IO (Mbox ByteString)
 parseMboxFile Forward  = (either fail return =<<) . (safeParseMbox <$>) . C.readFile
 parseMboxFile Backward = readRevMboxFile
