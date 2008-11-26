@@ -16,15 +16,17 @@ module Email where
 
 import Control.Applicative hiding (Const)
 import Control.Arrow
---import Control.Monad (ap)
 import qualified Data.ByteString.Lazy.Char8 as C
+import qualified Data.ByteString as S
 import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString.Lazy.Internal as B
 import Codec.MIME.Type (MIMEValue(..), MIMEValueB, Type(..), showMIMEType)
 import Codec.MIME.Parse (parseMIMEBody, safeParseMIMEBodyByteString, WithoutCRLF(..))
 import Text.ParserCombinators.Parsec.Rfc2822 (Field(..), fields)
 import Text.ParserCombinators.Parsec (parse)
 import EOL (fixCrlfS, fixCrlfB)
 import System.Console.GetOpt (OptDescr(..),ArgDescr(..))
+import System.IO (Handle, stdout, hPutChar)
 import System.IO.Error (ioError, catch, isDoesNotExistError)
 import System.Environment (getEnv)
 import System.IO.Unsafe (unsafePerformIO)
@@ -238,9 +240,17 @@ renderFmtComb (Pure fmt)   = renderShowFmt fmt
 renderFmtComb (Const s)    = const s
 renderFmtComb (Take i x)   = B.take (fromIntegral i) . renderFmtComb x
 renderFmtComb (Quote x)    = C.pack . show . C.unpack . renderFmtComb x
-renderFmtComb (Append x y) = \m -> renderFmtComb x m `B.append` renderFmtComb y m
+renderFmtComb (Append x y) = B.append <$> renderFmtComb x <*> renderFmtComb y
+
+hPutB' :: Handle -> B.ByteString -> IO ()
+hPutB' h = B.foldlChunks f (return ())
+  where f a c = a >> S.hPut h c
+
+putStrLnB' :: B.ByteString -> IO ()
+putStrLnB' s = hPutB' stdout s >> hPutChar stdout '\n'
 
 putEmails :: ShowFormat -> [(Email,MboxMessage B.ByteString)] -> IO ()
 putEmails MboxFmt       = B.putStr . printMbox . Mbox . map snd
-putEmails (FmtComb fmt) = mapM_ (C.putStrLn . renderFmtComb fmt)
+--putEmails (FmtComb fmt) = mapM_ (B.putStrLn . renderFmtComb fmt) -- it's seems to compute a big part (all?) of the list before starting to print (when using mbox-grep for instance)
+putEmails (FmtComb fmt) = mapM_ (putStrLnB' . renderFmtComb fmt)
 
