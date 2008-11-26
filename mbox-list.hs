@@ -12,7 +12,7 @@
 
 import Control.Arrow
 import Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody)
-import Email (readEmail,putEmails,ShowFormat(..),fmtOpt)
+import Email (readEmail,putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
 import System.Console.GetOpt
 
@@ -32,7 +32,7 @@ data Settings = Settings { fmt  :: ShowFormat
 type Flag = Settings -> Settings
 
 defaultSettings :: Settings
-defaultSettings = Settings { fmt  = OneLinerDebug
+defaultSettings = Settings { fmt  = defaultShowFormat
                            , dir  = Forward
                            , help = False
                            }
@@ -44,8 +44,8 @@ setHelp :: Settings -> Settings
 setHelp s = s { help = True }
 
 usage :: String -> a
-usage msg = error (msg ++ "\n" ++ usageInfo header options)
-  where header = "Usage: mbox-list [OPTION...] mbox-files..."
+usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
+  where header = "Usage: mbox-list [OPTION...] <mbox-file>..."
 
 options :: [OptDescr Flag]
 options =

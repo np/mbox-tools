@@ -11,7 +11,7 @@
 --------------------------------------------------------------------
 
 import Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFile)
-import Email (Email(..),ShowFormat(..),fmtOpt,readEmail,putEmails)
+import Email (Email(..),ShowFormat(..),fmtOpt,defaultShowFormat,readEmail,putEmails,showFormatsDoc)
 import System.Environment (getArgs)
 import Text.ParserCombinators.Parsec (parse)
 import Hutt.Query (evalQueryMsg,parseQuery)
@@ -69,7 +69,7 @@ data Settings = Settings { fmt  :: ShowFormat
 type Flag = Settings -> Settings
 
 defaultSettings :: Settings
-defaultSettings = Settings { fmt  = OneLinerDebug
+defaultSettings = Settings { fmt  = defaultShowFormat
                            , dir  = Forward
                            , help = False
                            }
@@ -81,7 +81,7 @@ setHelp :: Settings -> Settings
 setHelp s = s { help = True }
 
 usage :: String -> a
-usage msg = error (msg ++ "\n" ++ usageInfo header options)
+usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
   where header = "Usage: mbox-grep [OPTION...] <mbox-file> <query>"
 
 options :: [OptDescr Flag]
