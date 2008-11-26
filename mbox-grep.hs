@@ -15,7 +15,7 @@ import Email (Email(..),ShowFormat(..),fmtOpt,readEmail,putEmails)
 import System.Environment (getArgs)
 import Text.Parsec (parse)
 import Hutt.Query (evalQueryMsg,parseQuery)
-import Hutt.Types(GenMsg(..),GenDsc(..),MsgId(..),DscId(..),Query(..))
+import Hutt.Types(Msg(..),Dsc(..),MsgId(..),DscId(..),Query(..))
 import Data.Tree (Tree(..))
 import Control.Arrow
 import System.Console.GetOpt
@@ -30,16 +30,17 @@ grepMbox opts mbox queryString = do
     $ input
 
 emailMatchQuery :: Query -> Email -> Bool
-emailMatchQuery query email = evalQueryMsg dsc msg query
+emailMatchQuery query email = evalQueryMsg id dsc msg query
   where msg = Msg { msgHeader = []
-                  , msgBody = rawEmail email
-                  , msgContent = emailContent email
+                  --, msgBody = rawEmail email
+                  , msgContent = rawEmail email -- emailContent email
                   , msgId = MsgId 0
                   , msgLabels = []
-                  , msgParents = []
+                  , msgAddress = undefined
+                  , msgParent = Nothing
                   , msgReferences = [] }
         dsc = Dsc { dscId = DscId 0
-                  , dscMsgs = Node msg []
+                  , dscMsgs = Node () []
                   , dscLabels = [] }
 
 main :: IO ()
