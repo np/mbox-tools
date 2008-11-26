@@ -11,14 +11,15 @@
 --------------------------------------------------------------------
 
 import Control.Arrow
-import Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody)
+import Mbox (Mbox(..),Direction(..),parseMboxFiles,mboxMsgBody)
 import Email (readEmail,putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
 import System.Console.GetOpt
 
-listMbox :: Settings -> String -> IO ()
-listMbox opts mboxfile =
-  putEmails (fmt opts) . map ((readEmail . mboxMsgBody) &&& id) . unMbox =<< parseMboxFile (dir opts) mboxfile
+listMbox :: Settings -> [String] -> IO ()
+listMbox opts mboxfiles =
+  mapM_ (putEmails (fmt opts) . map ((readEmail . mboxMsgBody) &&& id) . unMbox)
+    =<< parseMboxFiles (dir opts) mboxfiles
 
 flipDir :: Settings -> Settings
 flipDir s = s { dir = opposite $ dir s }
@@ -45,7 +46,7 @@ setHelp s = s { help = True }
 
 usage :: String -> a
 usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
-  where header = "Usage: mbox-list [OPTION...] <mbox-file>..."
+  where header = "Usage: mbox-list [OPTION] <mbox-file>*"
 
 options :: [OptDescr Flag]
 options =
@@ -63,7 +64,6 @@ main = do
    then usage ""
    else
     case (nonopts, errs) of
-      ([],        []) -> usage "Too few arguments"
-      (mboxfiles, []) -> mapM_ (listMbox opts) mboxfiles
+      (mboxfiles, []) -> listMbox opts mboxfiles
       (_,          _) -> usage (concat errs)
 
