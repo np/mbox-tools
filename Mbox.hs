@@ -26,7 +26,6 @@ module Mbox
   , printMboxMessage
   , printMboxFromLine
   , fromQuoting
-  , readRevMboxFile
   , msgYear
   , msgMonthYear
   ) where
