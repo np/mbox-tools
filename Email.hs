@@ -18,16 +18,20 @@ import Control.Applicative
 import Control.Arrow
 import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString.Lazy as B
-import Codec.MIME.Type (MIMEValue(..), Type(..))
-import Codec.MIME.Parse (parseMIMEBody)
+import Codec.MIME.Type (MIMEValue(..), MIMEValueB, Type(..))
+import Codec.MIME.Parse (parseMIMEBody, safeParseMIMEBodyByteString, WithoutCRLF(..))
 import Text.ParserCombinators.Parsec.Rfc2822 (Field(..), fields)
 import Text.ParserCombinators.Parsec (parse)
-import EOL (fixCrlfS) -- fixCrlfB
+import EOL (fixCrlfS, fixCrlfB)
 import System.Console.GetOpt (OptDescr(..),ArgDescr(..))
+import System.IO.Error (ioError, catch, isDoesNotExistError)
+import System.Environment (getEnv)
+import System.IO.Unsafe (unsafePerformIO)
+import Debug.Trace (trace)
 import Mbox (Mbox(Mbox), MboxMessage, printMbox, printMboxFromLine)
 
 data Email = Email { emailFields  :: [Field]
-                   , emailContent :: MIMEValue
+                   , emailContent :: MIMEValueB
                    , rawEmail     :: B.ByteString
                    }
   deriving (Show)
@@ -73,6 +77,23 @@ readFields :: B.ByteString -> [Field]
 readFields = map (readField . (`C.append` (C.pack "\r\n"))) . C.lines
 -}
 
+safeGetEnv :: String -> IO (Maybe String)
+safeGetEnv s = (Just <$> getEnv s) `catch` \e -> if isDoesNotExistError e
+                                                 then return Nothing
+                                                 else ioError e -- I'm wondering if this could happen
+
+{-# NOINLINE dynParseMIMEBody #-}
+dynParseMIMEBody :: [(String, String)] -> B.ByteString -> MIMEValueB
+dynParseMIMEBody = unsafePerformIO $
+ do mode <- safeGetEnv "MIME_PARSING_MODE"
+    return $ case mode of
+      Just "string"         -> \hdr -> fmap C.pack . parseMIMEBody hdr . fixCrlfS . C.unpack
+      Just "bytestring"     -> \hdr -> parseMIMEBody hdr . fixCrlfB
+      Just "safe"           -> \hdr -> safeParseMIMEBodyByteString hdr . fixCrlfB
+      Just "bytestringcrlf" -> \hdr -> fmap withoutCRLF . parseMIMEBody hdr . WithoutCRLF
+      Just other            -> trace ("unknown MIME_PARSING_MODE " ++ other) parseMIMEBody
+      Nothing               -> parseMIMEBody
+
 readEmail :: B.ByteString -> Email
 readEmail !orig = mkEmail $ maybe (error "readEmail: parse error") id $ splitAtNlNl 0 orig
   where splitAtNlNl !count !input = do
@@ -84,7 +105,10 @@ readEmail !orig = mkEmail $ maybe (error "readEmail: parse error") id $ splitAtN
             _ -> splitAtNlNl (off + count) i'
         mkEmail ~(flds, body) =
           Email { emailFields = headers
-                , emailContent = parseMIMEBody optional_headers (fixCrlfS $ myCunpack body)
+                --, emailContent = parseMIMEBody optional_headers (fixCrlfB body)
+                --, emailContent = fmap C.pack $ parseMIMEBody optional_headers (fixCrlfS (C.unpack body))
+                --, emailContent = safeParseMIMEBodyByteString optional_headers (fixCrlfB body)
+                , emailContent = dynParseMIMEBody optional_headers body
                 , rawEmail = orig }
           where headers = readFields flds
                 optional_headers = [ (k,v) | OptionalField k v <- headers ]
