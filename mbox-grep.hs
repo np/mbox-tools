@@ -13,7 +13,7 @@
 import Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFile)
 import Email (Email(..),ShowFormat(..),fmtOpt,readEmail,putEmails)
 import System.Environment (getArgs)
-import Text.Parsec (parse)
+import Text.ParserCombinators.Parsec (parse)
 import Hutt.Query (evalQueryMsg,parseQuery)
 import Hutt.Types(Msg(..),Dsc(..),MsgId(..),DscId(..),Query(..))
 import Data.Tree (Tree(..))
