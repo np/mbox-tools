@@ -11,7 +11,7 @@
 --------------------------------------------------------------------
 
 import Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFiles)
-import Email (Email(..),ShowFormat(..),fmtOpt,defaultShowFormat,readEmail,putEmails,showFormatsDoc)
+import Email (Email(..),ShowFormat(..),fmtOpt,defaultShowFormat,readEmail,putEmails,showFormatsDoc,stringOfField)
 import System.Environment (getArgs)
 import Text.ParserCombinators.Parsec (parse)
 import Hutt.Query (evalQueryMsg,parseQuery)
@@ -28,8 +28,8 @@ grepMbox opts queryString = (mapM_ f =<<) . parseMboxFiles (dir opts)
                 . map ((readEmail . mboxMsgBody) &&& id) . unMbox
 
 emailMatchQuery :: Query -> Email -> Bool
-emailMatchQuery query email = evalQueryMsg id dsc msg query
-  where msg = Msg { msgHeader = []
+emailMatchQuery query email = evalQueryMsg (msg, dsc) query
+  where msg = Msg { msgHeader = map stringOfField $ emailFields email
                   --, msgBody = rawEmail email
                   , msgContent = rawEmail email -- emailContent email
                   , msgId = MsgId 0
