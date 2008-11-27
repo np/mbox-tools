@@ -250,8 +250,9 @@ renderFmtComb (Quote x)    = C.pack . show . C.unpack . renderFmtComb x
 renderFmtComb (Append x y) = B.append <$> renderFmtComb x <*> renderFmtComb y
 
 hPutB' :: Handle -> B.ByteString -> IO ()
-hPutB' h = B.foldlChunks f (return ())
-  where f a c = a >> S.hPut h c
+hPutB' h = go
+  where go B.Empty        = return ()
+        go (B.Chunk c cs) = S.hPut h c >> go cs
 
 putStrLnB' :: B.ByteString -> IO ()
 putStrLnB' s = hPutB' stdout s >> hPutChar stdout '\n'
