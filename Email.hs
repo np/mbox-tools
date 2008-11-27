@@ -36,6 +36,7 @@ import Data.Digest.Pure.MD5 (md5)
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.List (intersperse)
 import Data.Monoid (Monoid(..))
+import Data.Char (toLower)
 
 -- read/show extras
 mayRead :: Read a => String -> Maybe a
@@ -208,6 +209,12 @@ fmtOpt :: (forall err. String -> err) -> (ShowFormat -> a) -> OptDescr a
 fmtOpt usage f = Option ['f'] ["fmt"] (ReqArg (f . parseFmt) "FMT") desc
   where parseFmt = maybe (usage "Bad display format") id . mayReadShowFormat
         desc = "Choose the display format (" ++ showFormats ++ ")"
+
+stringOfField :: Field -> (String, String)
+stringOfField (MessageID x) = ("message-id", fromMaybe (error "impossible: Email.stringOfField") $ unquote x)
+stringOfField (Subject   x) = ("subject",    x)
+stringOfField (OptionalField x y) = (map toLower x, y)
+stringOfField x = ("x-unknown", show x) -- TODO
 
 messageId :: Email -> Maybe String
 messageId msg = listToMaybe [ mid | MessageID mid <- emailFields msg ]
