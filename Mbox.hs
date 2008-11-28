@@ -283,8 +283,9 @@ parseMboxFile Backward = readRevMboxFile
 -- | Returns a mbox list given a direction (forward/backward) and a list of file path.
 --   Note that files are opened lazily.
 parseMboxFiles :: Direction -> [FilePath] -> IO [Mbox ByteString]
-parseMboxFiles _   [] = (:[]) . parseMbox <$> C.getContents
-parseMboxFiles dir xs = mapM (unsafeInterleaveIO . parseMboxFile dir) xs
+parseMboxFiles Forward  [] = (:[]) . parseMbox <$> C.getContents
+parseMboxFiles Backward [] = fail "reading backward on standard input does not make sense"
+parseMboxFiles dir      xs = mapM (unsafeInterleaveIO . parseMboxFile dir) xs
 
 mboxChunkSize :: Integer
 mboxChunkSize = 10*oneMegabyte
