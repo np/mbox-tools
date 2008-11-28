@@ -10,7 +10,7 @@
 --
 --------------------------------------------------------------------
 
-import Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFiles)
+import Codec.Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFiles)
 import Email (Email(..),ShowFormat(..),fmtOpt,defaultShowFormat,readEmail,putEmails,showFormatsDoc,stringOfField)
 import System.Environment (getArgs)
 import Text.ParserCombinators.Parsec (parse)

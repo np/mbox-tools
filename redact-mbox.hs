@@ -10,7 +10,7 @@
 --
 --------------------------------------------------------------------
 
-import Mbox (Mbox(..),MboxMessage(..),parseMbox,printMbox)
+import Codec.Mbox (Mbox(..),MboxMessage(..),parseMbox,printMbox)
 import qualified Data.ByteString.Lazy as B (ByteString,readFile,writeFile)
 import qualified Data.ByteString.Lazy.Char8 as C (mapAccumL)
 import Data.List (mapAccumL)

@@ -11,7 +11,7 @@
 --------------------------------------------------------------------
 
 import Control.Arrow
-import Mbox (Mbox(..),Direction(..),parseMboxFiles,mboxMsgBody)
+import Codec.Mbox (Mbox(..),Direction(..),parseMboxFiles,mboxMsgBody)
 import Email (readEmail,putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
 import System.Console.GetOpt

@@ -11,7 +11,7 @@
 --------------------------------------------------------------------
 
 import Control.Applicative
-import Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody,printMboxMessage)
+import Codec.Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody,printMboxMessage)
 import Email (Email(..),readEmail)
 import Text.ParserCombinators.Parsec.Rfc2822 (Field(MessageID))
 import Data.Maybe (listToMaybe, fromMaybe)

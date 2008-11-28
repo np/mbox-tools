@@ -1,4 +1,4 @@
-import Mbox (unMbox,parseMbox)
+import Codec.Mbox (unMbox,parseMbox)
 import qualified Data.ByteString.Lazy as B
 import System.IO (hPutStrLn, stderr)
 

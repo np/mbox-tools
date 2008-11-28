@@ -1,4 +1,4 @@
-import Mbox (Mbox(..), MboxMessage(..), parseMbox)
+import Codec.Mbox (Mbox(..), MboxMessage(..), parseMbox)
 import Control.Applicative ((<$>))
 import Data.List (foldl')
 import qualified Data.ByteString.Lazy as B

@@ -12,7 +12,7 @@
 --------------------------------------------------------------------
 
 import Control.Arrow
-import Mbox (Mbox(..),MboxMessage,Direction(..),msgYear,msgMonthYear,parseMboxFile,printMbox)
+import Codec.Mbox (Mbox(..),MboxMessage,Direction(..),msgYear,msgMonthYear,parseMboxFile,printMbox)
 import qualified Data.ByteString.Lazy.Char8 as C
 import Data.Char (toLower)
 import Data.List (groupBy)

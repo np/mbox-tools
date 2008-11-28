@@ -1,4 +1,4 @@
-import Mbox (fromQuoting)
+import Codec.Mbox (fromQuoting)
 import qualified Data.ByteString.Lazy.Char8 as C (getContents,putStr)
 import Control.Applicative ((<$>))
 import System.Environment (getArgs)
