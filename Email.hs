@@ -15,7 +15,7 @@
 module Email where
 
 import Control.Applicative hiding (Const)
-import Control.Arrow
+import Control.Arrow hiding (pure)
 import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Lazy as B
@@ -61,6 +61,8 @@ data ShowFmt = ShowMessageID -- should stay the first
              | ShowSubject
              | ShowMboxSender
              | ShowMboxTime
+             | ShowMboxFile
+             | ShowMboxOffset
              | ShowMD5
              | ShowMIMEType
              | HaskellShow
@@ -88,6 +90,8 @@ instance Show ShowFmt where
   show ShowSubject    = "subj"
   show ShowMboxSender = "mboxsender"
   show ShowMboxTime   = "mboxtime"
+  show ShowMboxFile   = "mboxfile"
+  show ShowMboxOffset = "offset"
   show ShowMD5        = "md5"
   show ShowMIMEType   = "mimetype"
   show HaskellShow    = "show"
@@ -235,6 +239,8 @@ unquote _        = Nothing
 renderShowFmt :: ShowFmt -> (Email,MboxMessage B.ByteString) -> B.ByteString
 renderShowFmt ShowMboxSender = mboxMsgSender . snd
 renderShowFmt ShowMboxTime   = mboxMsgTime . snd
+renderShowFmt ShowMboxFile   = C.pack . mboxMsgFile . snd
+renderShowFmt ShowMboxOffset = C.pack . show . mboxMsgOffset . snd
 renderShowFmt ShowMessageID  = C.pack . fromMaybe "# NO VALID MESSAGE ID" . (>>= unquote) . messageId . fst
 renderShowFmt ShowSubject    = C.pack . fromMaybe "# NO VALID SUBJECT" . messageSubject . fst
 renderShowFmt ShowMD5        = C.pack . show . md5 . mboxMsgBody . snd
