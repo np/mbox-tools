@@ -12,7 +12,7 @@
 
 import Codec.Mbox (Mbox(..),MboxMessage(..),parseMbox,printMbox)
 import qualified Data.ByteString.Lazy as B (ByteString,readFile,writeFile)
-import qualified Data.ByteString.Lazy.Char8 as C (mapAccumL)
+import qualified Data.ByteString.Lazy.Char8 as C (mapAccumL,unpack,pack)
 import Data.List (mapAccumL)
 import Data.Char (isDigit,isLower,isUpper)
 import Control.Applicative
@@ -72,10 +72,11 @@ alphas = lowers ++ uppers
 redactString :: B.ByteString -> RedactState B.ByteString
 redactString = wrapState $ C.mapAccumL $ unwrapState redactChar
 
+{- NOTE that the offset is not redacted -}
 redactMboxMessage :: MboxMessage B.ByteString -> RedactState (MboxMessage B.ByteString)
-redactMboxMessage (MboxMessage sender time body) =
-  -- MboxMessage <$> redactString sender <*> redactString time <*> redactString body
+redactMboxMessage (MboxMessage sender time body file offset) =
   MboxMessage `fmap` redactString sender `ap` redactString time `ap` redactString body
+                `ap` (C.unpack `fmap` redactString (C.pack file)) `ap` return offset
 
 main :: IO ()
 main = do
