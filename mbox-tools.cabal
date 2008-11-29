@@ -60,6 +60,11 @@ executable mbox-list
     ghc-options: -Wall
   if !flag(use_hsemail)
     buildable: False
+executable mbox-pick
+    main-is: mbox-pick.hs
+    ghc-options: -Wall
+  if !flag(use_hsemail)
+    buildable: False
 executable mbox-partition
     main-is: mbox-partition.hs
     ghc-options: -Wall
