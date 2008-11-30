@@ -247,8 +247,8 @@ renderShowFmt ShowMboxMsgFile    = C.pack . mboxMsgFile . snd
 renderShowFmt ShowMboxMsgOffset  = C.pack . show . mboxMsgOffset . snd
 renderShowFmt ShowMboxSize       = C.pack . show . (+1) . C.length . printMboxMessage . snd
 renderShowFmt ShowMboxBodySize   = C.pack . show . C.length . mboxMsgBody . snd
-renderShowFmt ShowMessageID      = C.pack . fromMaybe "# NO VALID MESSAGE ID" . (>>= unquote) . messageId . fst
-renderShowFmt ShowSubject        = C.pack . fromMaybe "# NO VALID SUBJECT" . messageSubject . fst
+renderShowFmt ShowMessageID      = C.pack . fromMaybe "<NO-VALID-MESSAGE-ID>" . (>>= unquote) . messageId . fst
+renderShowFmt ShowSubject        = C.pack . fromMaybe "<NO-VALID-SUBJECT>" . messageSubject . fst
 renderShowFmt ShowMboxMsgBodyMD5 = C.pack . show . md5 . mboxMsgBody . snd
 renderShowFmt ShowMIMEType       = C.pack . showMIMEType . mimeType . mime_val_type . emailContent . fst
 renderShowFmt HaskellShow        = C.pack . show . fst
