@@ -59,11 +59,13 @@ defaultShowFormat = oneLinerFmt
 
 data ShowFmt = ShowMessageID -- should stay the first
              | ShowSubject
-             | ShowMboxSender
-             | ShowMboxTime
-             | ShowMboxFile
-             | ShowMboxOffset
-             | ShowMD5
+             | ShowMboxMsgSender
+             | ShowMboxMsgTime
+             | ShowMboxMsgFile
+             | ShowMboxMsgOffset
+             | ShowMboxSize
+             | ShowMboxBodySize
+             | ShowMboxMsgBodyMD5
              | ShowMIMEType
              | HaskellShow
   deriving (Eq, Enum)
@@ -86,15 +88,17 @@ instance Monoid FmtComb where
   mappend x y     = x `Append` y
 
 instance Show ShowFmt where
-  show ShowMessageID  = "mid"
-  show ShowSubject    = "subj"
-  show ShowMboxSender = "mboxsender"
-  show ShowMboxTime   = "mboxtime"
-  show ShowMboxFile   = "mboxfile"
-  show ShowMboxOffset = "offset"
-  show ShowMD5        = "md5"
-  show ShowMIMEType   = "mimetype"
-  show HaskellShow    = "show"
+  show ShowMessageID      = "mid"
+  show ShowSubject        = "subj"
+  show ShowMboxMsgSender  = "mboxmsgsender"
+  show ShowMboxMsgTime    = "mboxmsgtime"
+  show ShowMboxMsgFile    = "mboxmsgfile"
+  show ShowMboxMsgOffset  = "offset"
+  show ShowMboxSize       = "mboxmsgsize"
+  show ShowMboxBodySize   = "mboxmsgbodysize"
+  show ShowMboxMsgBodyMD5 = "mboxmsgbodymd5"
+  show ShowMIMEType       = "mimetype"
+  show HaskellShow        = "haskellshow"
 
 mayEvalStr :: String -> Maybe String
 mayEvalStr = mayRead . ('\"' :) . foldr escapeDQuote "\""
@@ -119,7 +123,7 @@ showFormatsDoc :: String
 showFormatsDoc = unlines $ ["Message formatting:"
                            ,"  * one : One line per email with: subject, mimetype and message ID (default)"
                            ,"  * mbox: Write emails in mbox format"
-                           ,"  * from: One line header of mbox format [as 'From %(mboxsender) %(mboxtime)']"
+                           ,"  * from: One line header of mbox format [as 'From %(mboxmsgsender) %(mboxmsgtime)']"
                            ,"  * Custom:"
                            ,"      fmt  ::= ( '%(' name ')' | string )*"
                            ,"      name ::="] ++
@@ -132,7 +136,7 @@ constC :: String -> FmtComb
 constC = Const . C.pack
 
 mboxFrom :: ShowFormat
-mboxFrom = FmtComb $ mconcat [constC "From ", Pure ShowMboxSender, constC " ", Pure ShowMboxTime]
+mboxFrom = FmtComb $ mconcat [constC "From ", Pure ShowMboxMsgSender, constC " ", Pure ShowMboxMsgTime]
 
 oneLinerFmt :: ShowFormat
 oneLinerFmt =
@@ -237,15 +241,17 @@ unquote ('<':xs) = listToMaybe [ys | zs == ">"] where (ys, zs) = break (=='>') x
 unquote _        = Nothing
 
 renderShowFmt :: ShowFmt -> (Email,MboxMessage B.ByteString) -> B.ByteString
-renderShowFmt ShowMboxSender = mboxMsgSender . snd
-renderShowFmt ShowMboxTime   = mboxMsgTime . snd
-renderShowFmt ShowMboxFile   = C.pack . mboxMsgFile . snd
-renderShowFmt ShowMboxOffset = C.pack . show . mboxMsgOffset . snd
-renderShowFmt ShowMessageID  = C.pack . fromMaybe "# NO VALID MESSAGE ID" . (>>= unquote) . messageId . fst
-renderShowFmt ShowSubject    = C.pack . fromMaybe "# NO VALID SUBJECT" . messageSubject . fst
-renderShowFmt ShowMD5        = C.pack . show . md5 . mboxMsgBody . snd
-renderShowFmt ShowMIMEType   = C.pack . showMIMEType . mimeType . mime_val_type . emailContent . fst
-renderShowFmt HaskellShow    = C.pack . show . fst
+renderShowFmt ShowMboxMsgSender  = mboxMsgSender . snd
+renderShowFmt ShowMboxMsgTime    = mboxMsgTime . snd
+renderShowFmt ShowMboxMsgFile    = C.pack . mboxMsgFile . snd
+renderShowFmt ShowMboxMsgOffset  = C.pack . show . mboxMsgOffset . snd
+renderShowFmt ShowMboxSize       = C.pack . show . (+1) . C.length . printMboxMessage . snd
+renderShowFmt ShowMboxBodySize   = C.pack . show . C.length . mboxMsgBody . snd
+renderShowFmt ShowMessageID      = C.pack . fromMaybe "# NO VALID MESSAGE ID" . (>>= unquote) . messageId . fst
+renderShowFmt ShowSubject        = C.pack . fromMaybe "# NO VALID SUBJECT" . messageSubject . fst
+renderShowFmt ShowMboxMsgBodyMD5 = C.pack . show . md5 . mboxMsgBody . snd
+renderShowFmt ShowMIMEType       = C.pack . showMIMEType . mimeType . mime_val_type . emailContent . fst
+renderShowFmt HaskellShow        = C.pack . show . fst
 
 renderFmtComb :: FmtComb -> (Email,MboxMessage B.ByteString) -> B.ByteString
 renderFmtComb Empty        = const B.empty
