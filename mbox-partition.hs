@@ -69,10 +69,10 @@ usage msg = error (msg ++ "\n" ++ usageInfo header options)
 
 options :: [OptDescr Flag]
 options =
-  [ Option ['m'] ["msgids"]  (ReqArg (\x r->r{msgids=x}) "FILE") "A file with message-IDs"
-  , Option ['i'] ["inside"]  (ReqArg (\x r->r{inside=x}) "FILE") "Will receive messages referenced by the 'msgids' file"
-  , Option ['o'] ["outside"] (ReqArg (\x r->r{outside=x}) "FILE") "Will receive messages *NOT* referenced by the 'msgids' file"
-  , Option ['?'] ["help"]    (NoArg  (\r->r{help=True})) "Show this help message"
+  [ Option "m" ["msgids"]  (ReqArg (\x r->r{msgids=x}) "FILE") "A file with message-IDs"
+  , Option "i" ["inside"]  (ReqArg (\x r->r{inside=x}) "FILE") "Will receive messages referenced by the 'msgids' file"
+  , Option "o" ["outside"] (ReqArg (\x r->r{outside=x}) "FILE") "Will receive messages *NOT* referenced by the 'msgids' file"
+  , Option "?" ["help"]    (NoArg  (\r->r{help=True})) "Show this help message"
   ]
 
 main :: IO ()
