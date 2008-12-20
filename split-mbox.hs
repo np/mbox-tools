@@ -16,6 +16,7 @@ import Codec.Mbox (Mbox(..),MboxMessage,Direction(..),msgYear,msgMonthYear,parse
 import qualified Data.ByteString.Lazy.Char8 as C
 import Data.Char (toLower)
 import Data.List (groupBy)
+import Data.Maybe (fromMaybe)
 import System.Environment (getArgs)
 import System.Console.GetOpt
 import System.IO (hFlush, stdout)
@@ -65,12 +66,12 @@ usage msg = error (msg ++ "\n" ++ usageInfo header options)
 
 options :: [OptDescr Flag]
 options =
-  [ Option ['?'] ["help"] (NoArg setHelp) "Show this help message"
+  [ Option "?" ["help"] (NoArg setHelp) "Show this help message"
   , byOpt ]
 
 byOpt :: OptDescr Flag
-byOpt = Option ['b'] ["by"] (ReqArg (setSplitBy . parseBy) "ARG") desc
-  where parseBy = maybe (usage "Bad argument") id . (`lookup` args)
+byOpt = Option "b" ["by"] (ReqArg (setSplitBy . parseBy) "ARG") desc
+  where parseBy = fromMaybe (usage "Bad argument") . (`lookup` args)
         args = map ((map toLower . show) &&& id) [ Year .. ]
         desc = "Split by " ++ show (map fst args)
 
