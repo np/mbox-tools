@@ -18,9 +18,9 @@ import qualified Data.ByteString.Lazy.Char8 as C
 -- Make sure all lines are terminated by CRLF.
 
 fixCrlfS :: String -> String
-fixCrlfS ('\r':'\n':xs)   = '\r' : '\n' : (fixCrlfS xs)
-fixCrlfS ('\n':xs)        = '\r' : '\n' : (fixCrlfS xs)
-fixCrlfS (x:xs)           = x : (fixCrlfS xs)
+fixCrlfS ('\r':'\n':xs)   = '\r' : '\n' : fixCrlfS xs
+fixCrlfS ('\n':xs)        = '\r' : '\n' : fixCrlfS xs
+fixCrlfS (x:xs)           = x : fixCrlfS xs
 fixCrlfS []               = []
 
 fixLfS :: String -> String
