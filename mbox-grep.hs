@@ -84,7 +84,7 @@ usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
 options :: [OptDescr Flag]
 options =
   [ fmtOpt usage setFmt
-  , Option ['r'] ["reverse"] (NoArg flipDir) "Reverse the mbox order (latest firsts)"
-  , Option ['?'] ["help"]    (NoArg setHelp) "Show this help message"
+  , Option "r" ["reverse"] (NoArg flipDir) "Reverse the mbox order (latest firsts)"
+  , Option "?" ["help"]    (NoArg setHelp) "Show this help message"
   ]
 
