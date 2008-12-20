@@ -62,7 +62,7 @@ usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
 options :: [OptDescr Flag]
 options =
   [ fmtOpt usage setFmt
-  , Option ['?'] ["help"]    (NoArg setHelp) "Show this help message"
+  , Option "?" ["help"]    (NoArg setHelp) "Show this help message"
   ]
 
 main :: IO ()
