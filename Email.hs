@@ -195,7 +195,7 @@ dynParseMIMEBody = unsafePerformIO $
       Nothing               -> parseMIMEBody
 
 readEmail :: B.ByteString -> Email
-readEmail !orig = mkEmail $ maybe (error "readEmail: parse error") id $ splitAtNlNl 0 orig
+readEmail !orig = mkEmail $ fromMaybe (error "readEmail: parse error") $ splitAtNlNl 0 orig
   where splitAtNlNl !count !input = do
           off <- (+1) <$> C.elemIndex '\n' input
           let i' = C.drop off input
@@ -214,8 +214,8 @@ readEmail !orig = mkEmail $ maybe (error "readEmail: parse error") id $ splitAtN
                 optional_headers = [ (k,v) | OptionalField k v <- headers ]
 
 fmtOpt :: (forall err. String -> err) -> (ShowFormat -> a) -> OptDescr a
-fmtOpt usage f = Option ['f'] ["fmt"] (ReqArg (f . parseFmt) "FMT") desc
-  where parseFmt = maybe (usage "Bad display format") id . mayReadShowFormat
+fmtOpt usage f = Option "f" ["fmt"] (ReqArg (f . parseFmt) "FMT") desc
+  where parseFmt = fromMaybe (usage "Bad display format") . mayReadShowFormat
         desc = "Choose the display format (" ++ showFormats ++ ")"
 
 stringOfField :: Field -> (String, String)
