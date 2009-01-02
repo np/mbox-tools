@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-grep
@@ -10,13 +11,16 @@
 --
 --------------------------------------------------------------------
 
-import Codec.Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFiles)
-import Email (Email(..),ShowFormat(..),fmtOpt,defaultShowFormat,readEmail,putEmails,showFormatsDoc,stringOfField)
+import Codec.Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFiles, opposite)
+import Email (Email(..),ShowFormat(..),fmtOpt,defaultShowFormat,
+              readEmail,putEmails,showFormatsDoc,stringOfField)
 import System.Environment (getArgs)
 import Text.ParserCombinators.Parsec (parse)
 import Hutt.Query (evalQueryMsg,parseQuery)
 import Hutt.Types(Msg(..),Dsc(..),MsgId(..),DscId(..),Query(..))
 import Data.Tree (Tree(..))
+import Data.Accessor
+import Data.Accessor.Template
 import Control.Arrow
 import System.Console.GetOpt
 
@@ -41,6 +45,13 @@ emailMatchQuery query email = evalQueryMsg (msg, dsc) query
                   , dscMsgs = Node () []
                   , dscLabels = [] }
 
+data Settings = Settings { fmt  :: ShowFormat
+                         , dir  :: Direction
+                         , help :: Bool
+                         }
+$(nameDeriveAccessors ''Settings $ Just.(++ "A"))
+type Flag = Settings -> Settings
+
 main :: IO ()
 main = do
   args <- getArgs
@@ -54,28 +65,11 @@ main = do
       (_,                   []) -> usage "Too few arguments"
       _                         -> usage (concat errs)
 
-flipDir :: Settings -> Settings
-flipDir s = s { dir = opposite $ dir s }
-  where opposite Backward = Forward
-        opposite Forward  = Backward
-
-data Settings = Settings { fmt  :: ShowFormat
-                         , dir  :: Direction
-                         , help :: Bool
-                         }
-type Flag = Settings -> Settings
-
 defaultSettings :: Settings
 defaultSettings = Settings { fmt  = defaultShowFormat
                            , dir  = Forward
                            , help = False
                            }
-
-setFmt :: ShowFormat -> Settings -> Settings
-setFmt f s = s { fmt = f }
-
-setHelp :: Settings -> Settings
-setHelp s = s { help = True }
 
 usage :: String -> a
 usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
@@ -83,8 +77,8 @@ usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
 
 options :: [OptDescr Flag]
 options =
-  [ fmtOpt usage setFmt
-  , Option "r" ["reverse"] (NoArg flipDir) "Reverse the mbox order (latest firsts)"
-  , Option "?" ["help"]    (NoArg setHelp) "Show this help message"
+  [ fmtOpt usage (fmtA ^=)
+  , Option "r" ["reverse"] (NoArg (dirA ^: opposite)) "Reverse the mbox order (latest firsts)"
+  , Option "?" ["help"]    (NoArg (helpA ^= True)) "Show this help message"
   ]
 
