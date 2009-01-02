@@ -24,12 +24,6 @@ import System.IO
 type RedactState a = State [Int] a
 
 -- BEGIN MISSING
-{-
-list :: b -> (a -> [a] -> b) -> [a] -> b
-list nil _    []     = nil
-list _   cons (x:xs) = cons x xs
--}
-
 consume :: State [a] a
 consume = do (c:cs) <- get
              put cs
