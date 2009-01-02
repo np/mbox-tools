@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-pick
@@ -13,9 +14,11 @@
 import Control.Arrow
 import Control.Monad
 import Control.Applicative
+import Data.Accessor
+import Data.Accessor.Template
 import Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.ByteString.Lazy.Char8 as C
-import Codec.Mbox (MboxMessage(..),Direction(..),parseOneMboxMessage)
+import Codec.Mbox (MboxMessage(..),parseOneMboxMessage)
 import Email (readEmail,putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
 import System.Console.GetOpt
@@ -38,22 +41,15 @@ pickMbox opts sequ' mmbox = do
   hClose mbox
 
 data Settings = Settings { fmt  :: ShowFormat
-                         , dir  :: Direction
                          , help :: Bool
                          }
+$(nameDeriveAccessors ''Settings $ Just.(++ "A"))
 type Flag = Settings -> Settings
 
 defaultSettings :: Settings
 defaultSettings = Settings { fmt  = defaultShowFormat
-                           , dir  = Forward
                            , help = False
                            }
-
-setFmt :: ShowFormat -> Settings -> Settings
-setFmt f s = s { fmt = f }
-
-setHelp :: Settings -> Settings
-setHelp s = s { help = True }
 
 usage :: String -> a
 usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
@@ -61,8 +57,8 @@ usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
 
 options :: [OptDescr Flag]
 options =
-  [ fmtOpt usage setFmt
-  , Option "?" ["help"]    (NoArg setHelp) "Show this help message"
+  [ fmtOpt usage (fmtA ^=)
+  , Option "?" ["help"]    (NoArg (helpA ^= True)) "Show this help message"
   ]
 
 main :: IO ()
