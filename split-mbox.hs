@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, ExistentialQuantification #-}
+{-# LANGUAGE BangPatterns, ExistentialQuantification, TemplateHaskell #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : split-mbox
@@ -14,6 +14,8 @@
 import Control.Arrow
 import Codec.Mbox (Mbox(..),MboxMessage,Direction(..),msgYear,msgMonthYear,parseMboxFile,printMbox)
 import qualified Data.ByteString.Lazy.Char8 as C
+import Data.Accessor
+import Data.Accessor.Template
 import Data.Char (toLower)
 import Data.List (groupBy)
 import Data.Maybe (fromMaybe)
@@ -44,21 +46,16 @@ splitMboxWith settings =
     Year  -> splitMbox msgYear (show . msgYear)
     Month -> splitMbox msgMonthYear (uncurry (++) . (map toLower . show *** ('-':) . show) . msgMonthYear)
 
-data Settings = Settings { help :: Bool, splitBy :: SplitBy }
-type Flag = Settings -> Settings
-
 -- Year is first
 data SplitBy = Year | Month
   deriving (Show, Enum)
 
+data Settings = Settings { help :: Bool, splitBy :: SplitBy }
+$(nameDeriveAccessors ''Settings $ Just.(++ "A"))
+type Flag = Settings -> Settings
+
 defaultSettings :: Settings
 defaultSettings = Settings { help = False, splitBy = Year }
-
-setHelp :: Settings -> Settings
-setHelp s = s { help = True }
-
-setSplitBy :: SplitBy -> Settings -> Settings
-setSplitBy x s = s { splitBy = x }
 
 usage :: String -> a
 usage msg = error (msg ++ "\n" ++ usageInfo header options)
@@ -66,11 +63,11 @@ usage msg = error (msg ++ "\n" ++ usageInfo header options)
 
 options :: [OptDescr Flag]
 options =
-  [ Option "?" ["help"] (NoArg setHelp) "Show this help message"
+  [ Option "?" ["help"] (NoArg (helpA ^= True)) "Show this help message"
   , byOpt ]
 
 byOpt :: OptDescr Flag
-byOpt = Option "b" ["by"] (ReqArg (setSplitBy . parseBy) "ARG") desc
+byOpt = Option "b" ["by"] (ReqArg ((splitByA ^=) . parseBy) "ARG") desc
   where parseBy = fromMaybe (usage "Bad argument") . (`lookup` args)
         args = map ((map toLower . show) &&& id) [ Year .. ]
         desc = "Split by " ++ show (map fst args)
