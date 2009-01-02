@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-partition
@@ -14,6 +15,8 @@ import Control.Applicative
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody,printMboxMessage)
 import Email (Email(..),readEmail)
 import Text.ParserCombinators.Parsec.Rfc2822 (Field(MessageID))
+import Data.Accessor
+import Data.Accessor.Template
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Set (fromList, member)
 import qualified Data.ByteString.Lazy.Char8 as C
@@ -55,6 +58,7 @@ data Settings = Settings { help :: Bool
                          , inside :: String
                          , outside :: String
                          }
+$(nameDeriveAccessors ''Settings $ Just.(++ "A"))
 type Flag = Settings -> Settings
 
 defaultSettings :: Settings
@@ -69,10 +73,10 @@ usage msg = error (msg ++ "\n" ++ usageInfo header options)
 
 options :: [OptDescr Flag]
 options =
-  [ Option "m" ["msgids"]  (ReqArg (\x r->r{msgids=x}) "FILE") "A file with message-IDs"
-  , Option "i" ["inside"]  (ReqArg (\x r->r{inside=x}) "FILE") "Will receive messages referenced by the 'msgids' file"
-  , Option "o" ["outside"] (ReqArg (\x r->r{outside=x}) "FILE") "Will receive messages *NOT* referenced by the 'msgids' file"
-  , Option "?" ["help"]    (NoArg  (\r->r{help=True})) "Show this help message"
+  [ Option "m" ["msgids"]  (ReqArg (msgidsA ^=) "FILE") "A file with message-IDs"
+  , Option "i" ["inside"]  (ReqArg (insideA ^=) "FILE") "Will receive messages referenced by the 'msgids' file"
+  , Option "o" ["outside"] (ReqArg (outsideA ^=) "FILE") "Will receive messages *NOT* referenced by the 'msgids' file"
+  , Option "?" ["help"]    (NoArg  (helpA ^= True)) "Show this help message"
   ]
 
 main :: IO ()
