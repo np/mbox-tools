@@ -2,7 +2,7 @@
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-grep
--- Copyright : (c) Nicolas Pouillard 2008
+-- Copyright : (c) Nicolas Pouillard 2008, 2009
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
