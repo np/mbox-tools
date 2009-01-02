@@ -1,4 +1,3 @@
-{-# LANGUAGE RankNTypes #-}
 --------------------------------------------------------------------
 -- |
 -- Module    : Email
@@ -11,7 +10,7 @@
 --
 --------------------------------------------------------------------
 
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, Rank2Types, TemplateHaskell #-}
 module Email where
 
 import Control.Applicative hiding (Const)
@@ -37,6 +36,8 @@ import Data.Maybe (listToMaybe, fromMaybe)
 import Data.List (intersperse)
 import Data.Monoid (Monoid(..))
 import Data.Char (toLower)
+import Data.Accessor
+import Data.Accessor.Template
 
 -- read/show extras
 mayRead :: Read a => String -> Maybe a
@@ -49,6 +50,7 @@ data Email = Email { emailFields  :: [Field]
                    , rawEmail     :: B.ByteString
                    }
   deriving (Show)
+$(nameDeriveAccessors ''Email $ Just.(++ "A"))
 
 data ShowFormat = MboxFmt
                 | FmtComb FmtComb
