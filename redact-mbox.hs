@@ -79,7 +79,7 @@ main = do
   case args of
     [argin,argout] ->
         B.writeFile argout
-          =<< return . printMbox . Mbox . snd . mapAccumL (unwrapState redactMboxMessage) ints . unMbox . parseMbox
+          =<< return . printMbox . Mbox . snd . mapAccumL (unwrapState redactMboxMessage) ints . mboxMessages . parseMbox
           =<< B.readFile argin
     _ -> hPutStrLn stderr "Usage: redact-mbox <in.mbox> <out.mbox>"
 

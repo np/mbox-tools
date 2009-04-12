@@ -1,7 +1,7 @@
-import Codec.Mbox (unMbox,parseMbox)
+import Codec.Mbox (mboxMessages,parseMbox)
 import qualified Data.ByteString.Lazy as B
 import System.IO (hPutStrLn, stderr)
 
 main :: IO ()
 main = do hPutStrLn stderr "Reading from stdin..."
-          (print . length . unMbox . parseMbox) =<< B.getContents
+          (print . length . mboxMessages . parseMbox) =<< B.getContents

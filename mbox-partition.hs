@@ -42,7 +42,7 @@ partitionMbox opts mboxfiles = do
   houtside <- openFile (outside opts) AppendMode
   let onFile fp =
         progress_ . map (\m -> hPutStrLnC (if predicate m then hinside else houtside) (printMboxMessage m))
-                  . unMbox
+                  . mboxMessages
            =<< parseMboxFile Forward fp
   mapM_ onFile mboxfiles
   mapM_ hClose [hinside, houtside]

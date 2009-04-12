@@ -21,7 +21,7 @@ import Data.Accessor.Template
 
 listMbox :: Settings -> [String] -> IO ()
 listMbox opts mboxfiles =
-  mapM_ (putEmails (fmt opts) . map ((readEmail . mboxMsgBody) &&& id) . unMbox)
+  mapM_ (putEmails (fmt opts) . map ((readEmail . mboxMsgBody) &&& id) . mboxMessages)
     =<< parseMboxFiles (dir opts) mboxfiles
 
 data Settings = Settings { fmt  :: ShowFormat
