@@ -66,3 +66,7 @@ executable mbox-grep
 executable split-mbox
     main-is: split-mbox.hs
     ghc-options: -Wall
+executable mbox-iter
+    main-is: mbox-iter.hs
+    ghc-options: -Wall
+    build-depends: process
