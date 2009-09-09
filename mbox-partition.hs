@@ -12,7 +12,7 @@
 --------------------------------------------------------------------
 
 import Control.Applicative
-import Codec.Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody,printMboxMessage)
+import Codec.Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody,showMboxMessage)
 import Email (Email(..),readEmail)
 import Text.ParserCombinators.Parsec.Rfc2822 (Field(MessageID))
 import Data.Accessor
@@ -41,7 +41,7 @@ partitionMbox opts mboxfiles = do
   hinside <- openFile (inside opts) AppendMode
   houtside <- openFile (outside opts) AppendMode
   let onFile fp =
-        progress_ . map (\m -> hPutStrLnC (if predicate m then hinside else houtside) (printMboxMessage m))
+        progress_ . map (\m -> hPutStrLnC (if predicate m then hinside else houtside) (showMboxMessage m))
                   . mboxMessages
            =<< parseMboxFile Forward fp
   mapM_ onFile mboxfiles

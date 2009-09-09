@@ -12,7 +12,7 @@
 --------------------------------------------------------------------
 
 import Control.Arrow
-import Codec.Mbox (Mbox(..),MboxMessage,Direction(..),msgYear,msgMonthYear,parseMboxFile,printMbox)
+import Codec.Mbox (Mbox(..),MboxMessage,Direction(..),msgYear,msgMonthYear,parseMboxFile,showMbox)
 import qualified Data.ByteString.Lazy.Char8 as C
 import Data.Accessor
 import Data.Accessor.Template
@@ -38,7 +38,7 @@ splitMbox keyMsg fmtMsg mboxfile = do
   where go ms = do let !fp = "mbox-" ++ (fmtMsg $ head ms)
                    putStr ("\rWriting to " ++ fp ++ "...")
                    hFlush stdout
-                   C.appendFile fp . printMbox . Mbox $ ms
+                   C.appendFile fp . showMbox . Mbox $ ms
 
 splitMboxWith :: Settings -> String -> IO ()
 splitMboxWith settings =

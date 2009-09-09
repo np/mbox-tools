@@ -10,7 +10,7 @@
 --
 --------------------------------------------------------------------
 
-import Codec.Mbox (Mbox(..),MboxMessage(..),parseMbox,printMbox)
+import Codec.Mbox (Mbox(..),MboxMessage(..),parseMbox,showMbox)
 import qualified Data.ByteString.Lazy as B (ByteString,readFile,writeFile)
 import qualified Data.ByteString.Lazy.Char8 as C (mapAccumL,unpack,pack)
 import Data.List (mapAccumL)
@@ -79,7 +79,7 @@ main = do
   case args of
     [argin,argout] ->
         B.writeFile argout
-          =<< return . printMbox . Mbox . snd . mapAccumL (unwrapState redactMboxMessage) ints . mboxMessages . parseMbox
+          =<< return . showMbox . Mbox . snd . mapAccumL (unwrapState redactMboxMessage) ints . mboxMessages . parseMbox
           =<< B.readFile argin
     _ -> hPutStrLn stderr "Usage: redact-mbox <in.mbox> <out.mbox>"
 

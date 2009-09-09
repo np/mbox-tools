@@ -30,7 +30,7 @@ import System.IO.Error (ioError, catch, isDoesNotExistError)
 import System.Environment (getEnv)
 import System.IO.Unsafe (unsafePerformIO)
 import Debug.Trace (trace)
-import Codec.Mbox (Mbox(Mbox), MboxMessage(..), printMbox, printMboxMessage)
+import Codec.Mbox (Mbox(Mbox), MboxMessage(..), showMbox, showMboxMessage)
 import Data.Digest.Pure.MD5 (md5)
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.List (intersperse)
@@ -247,7 +247,7 @@ renderShowFmt ShowMboxMsgSender  = mboxMsgSender . snd
 renderShowFmt ShowMboxMsgTime    = mboxMsgTime . snd
 renderShowFmt ShowMboxMsgFile    = C.pack . mboxMsgFile . snd
 renderShowFmt ShowMboxMsgOffset  = C.pack . show . mboxMsgOffset . snd
-renderShowFmt ShowMboxSize       = C.pack . show . (+1) . C.length . printMboxMessage . snd
+renderShowFmt ShowMboxSize       = C.pack . show . (+1) . C.length . showMboxMessage . snd
 renderShowFmt ShowMboxBodySize   = C.pack . show . C.length . mboxMsgBody . snd
 renderShowFmt ShowMessageID      = C.pack . fromMaybe "<NO-VALID-MESSAGE-ID>" . (>>= unquote) . messageId . fst
 renderShowFmt ShowSubject        = C.pack . fromMaybe "<NO-VALID-SUBJECT>" . messageSubject . fst
@@ -272,7 +272,7 @@ putStrLnB' :: B.ByteString -> IO ()
 putStrLnB' s = hPutB' stdout s >> hPutChar stdout '\n'
 
 putEmails :: ShowFormat -> [(Email,MboxMessage B.ByteString)] -> IO ()
-putEmails MboxFmt       = B.putStr . printMbox . Mbox . map snd
+putEmails MboxFmt       = B.putStr . showMbox . Mbox . map snd
 --putEmails (FmtComb fmt) = mapM_ (B.putStrLn . renderFmtComb fmt) -- it's seems to compute a big part (all?) of the list before starting to print (when using mbox-grep for instance)
 putEmails (FmtComb fmt) = mapM_ (putStrLnB' . renderFmtComb fmt)
 
