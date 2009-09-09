@@ -173,6 +173,11 @@ readFields input =
   either err id . parse fields "<string>" . fixCrlfS . myCunpack $ input
   where err e = error $ "Error in the following message <<EOS\n" ++ myCunpack input ++ "\nEOS\n\n" ++ show e
 
+-- | Takes a message and reads only the fields part of it.
+readFieldsOnly :: B.ByteString -> [Field]
+readFieldsOnly inp = readFields . fst . fromMaybe err . splitAtNlNl $ inp
+  where err = error "readFieldsOnly: parse error"
+
 {-
 readField :: B.ByteString -> Field
 readField input =
@@ -222,6 +227,9 @@ readEmail !orig = mkEmail $ fromMaybe (error "readEmail: parse error") $ splitAt
                 , rawEmail = orig }
           where headers = readFields flds
                 optional_headers = [ (k,v) | OptionalField k v <- headers ]
+
+readMboxEmails :: Mbox B.ByteString -> [Email]
+readMboxEmails = map (readEmail . mboxMsgBody) . mboxMessages
 
 fmtOpt :: (forall err. String -> err) -> (ShowFormat -> a) -> OptDescr a
 fmtOpt usage f = Option "f" ["fmt"] (ReqArg (f . parseFmt) "FMT") desc
