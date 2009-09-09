@@ -196,15 +196,19 @@ dynParseMIMEBody = unsafePerformIO $
       Just other            -> trace ("unknown MIME_PARSING_MODE " ++ other) parseMIMEBody
       Nothing               -> parseMIMEBody
 
-readEmail :: B.ByteString -> Email
-readEmail !orig = mkEmail $ fromMaybe (error "readEmail: parse error") $ splitAtNlNl 0 orig
-  where splitAtNlNl !count !input = do
+splitAtNlNl :: B.ByteString -> Maybe (B.ByteString, B.ByteString)
+splitAtNlNl !orig = go 0 orig
+  where go !count !input = do
           off <- (+1) <$> C.elemIndex '\n' input
           let i' = C.drop off input
           case C.uncons i' of
             Nothing          -> Just (C.take (off + count) orig, C.empty)
             Just ('\n', i'') -> Just (C.take (off + count) orig, i'')
-            _ -> splitAtNlNl (off + count) i'
+            _ -> go (off + count) i'
+
+readEmail :: B.ByteString -> Email
+readEmail !orig = mkEmail $ fromMaybe (error "readEmail: parse error") $ splitAtNlNl orig
+     where
         mkEmail ~(flds, body) =
           Email { emailFields = headers
                 --, emailContent = parseMIMEBody optional_headers (fixCrlfB body)
