@@ -162,7 +162,7 @@ myCunpack = C.unpack
 
 
 {-
-  Since parsing the full message is two slow, so one first extract fields.
+  Since parsing the full message is two slow, one first extract fields.
 
   -- the old version
   > readEmail = either (error . show) id . parse message "<string>" . fixCrlfS . myCunpack
