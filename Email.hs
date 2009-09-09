@@ -111,7 +111,7 @@ mayReadShowFmts :: String -> Maybe FmtComb
 mayReadShowFmts = f
   where f ""          = Just mempty
         f ('%':'(':s) = let (s1,s2) = break (==')') s in mappend <$> (Pure <$> lookup s1 fmts) <*> f (drop 1 s2)
-        f s           = let (s1,s2) = break (=='%') s in mappend <$> (constC <$> mayEvalStr s1) <*> f s2
+        f s           = let (s1,s2) = break (=='%') s in mappend <$> (text <$> mayEvalStr s1) <*> f s2
 
         fmts = map (show &&& id) showFmts
 
@@ -134,22 +134,22 @@ showFormatsDoc = unlines $ ["Message formatting:"
 showFormats :: String
 showFormats = "one, mbox, from, <custom>"
 
-constC :: String -> FmtComb
-constC = Const . C.pack
+text :: String -> FmtComb
+text = Const . C.pack
 
 mboxFrom :: ShowFormat
-mboxFrom = FmtComb $ mconcat [constC "From ", Pure ShowMboxMsgSender, constC " ", Pure ShowMboxMsgTime]
+mboxFrom = FmtComb $ mconcat [text "From ", Pure ShowMboxMsgSender, text " ", Pure ShowMboxMsgTime]
 
 oneLinerFmt :: ShowFormat
 oneLinerFmt =
-  FmtComb $ mconcat $ intersperse (constC " | ")
+  FmtComb $ mconcat $ intersperse (text " | ")
           [align 40 $ ellipse 40 $ Pure ShowSubject, align 15 $ Pure ShowMIMEType, Pure ShowMessageID]
 
 align :: Int -> FmtComb -> FmtComb
 align n x = Take n (x `mappend` Const (C.repeat ' '))
 
 ellipse :: Int -> FmtComb -> FmtComb
-ellipse n s = Take n s `mappend` constC "..."
+ellipse n s = Take n s `mappend` text "..."
 
 myCunpack :: C.ByteString -> String
 myCunpack = C.unpack
