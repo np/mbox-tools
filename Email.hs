@@ -10,11 +10,13 @@
 --
 --------------------------------------------------------------------
 
-{-# LANGUAGE BangPatterns, Rank2Types, TemplateHaskell #-}
+{-# LANGUAGE BangPatterns, Rank2Types, TemplateHaskell,
+             OverloadedStrings, GeneralizedNewtypeDeriving #-}
 module Email where
 
-import Control.Applicative hiding (Const)
-import Control.Arrow hiding (pure)
+import Control.Applicative
+import Control.Arrow
+import Control.Monad.Reader
 import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Lazy as B
@@ -36,8 +38,22 @@ import Data.Maybe (listToMaybe, fromMaybe)
 import Data.List (intersperse)
 import Data.Monoid (Monoid(..))
 import Data.Char (toLower)
-import Data.Accessor
+import Data.Int (Int64)
 import Data.Accessor.Template
+
+type Message = (Email, MboxMessage B.ByteString)
+
+newtype ReaderMsg a = ReaderMsg { runReaderMsg :: Reader Message a }
+  deriving (Monad, Functor, Applicative, MonadReader Message)
+
+type FmtComb = ReaderMsg B.ByteString
+
+instance Monoid w => Monoid (ReaderMsg w) where
+  mempty = pure mempty
+  mappend x y = mappend <$> x <*> y
+
+evalReaderMsg :: Message -> ReaderMsg a -> a
+evalReaderMsg msg = flip runReader msg . runReaderMsg
 
 -- read/show extras
 mayRead :: Read a => String -> Maybe a
@@ -54,7 +70,6 @@ $(nameDeriveAccessors ''Email $ Just.(++ "A"))
 
 data ShowFormat = MboxFmt
                 | FmtComb FmtComb
-  deriving (Eq)
 
 defaultShowFormat :: ShowFormat
 defaultShowFormat = oneLinerFmt
@@ -74,20 +89,6 @@ data ShowFmt = ShowMessageID -- should stay the first
 
 showFmts :: [ShowFmt]
 showFmts = [ ShowMessageID .. ]
-
-data FmtComb = Take Int FmtComb
-             | Quote FmtComb
-             | Const B.ByteString
-             | Pure ShowFmt
-             | Append FmtComb FmtComb
-             | Empty
-  deriving (Eq)
-
-instance Monoid FmtComb where
-  mempty = Empty
-  mappend Empty x = x
-  mappend x Empty = x
-  mappend x y     = x `Append` y
 
 instance Show ShowFmt where
   show ShowMessageID      = "mid"
@@ -109,9 +110,9 @@ mayEvalStr = mayRead . ('\"' :) . foldr escapeDQuote "\""
 
 mayReadShowFmts :: String -> Maybe FmtComb
 mayReadShowFmts = f
-  where f ""          = Just mempty
-        f ('%':'(':s) = let (s1,s2) = break (==')') s in mappend <$> (Pure <$> lookup s1 fmts) <*> f (drop 1 s2)
-        f s           = let (s1,s2) = break (=='%') s in mappend <$> (text <$> mayEvalStr s1) <*> f s2
+  where f []          = Just mempty
+        f ('%':'(':s) = let (s1,s2) = break (==')') s in mappend <$> (showFmt <$> lookup s1 fmts) <*> f (drop 1 s2)
+        f s           = let (s1,s2) = break (=='%') s in mappend <$> (text . C.pack <$> mayEvalStr s1) <*> f s2
 
         fmts = map (show &&& id) showFmts
 
@@ -134,22 +135,25 @@ showFormatsDoc = unlines $ ["Message formatting:"
 showFormats :: String
 showFormats = "one, mbox, from, <custom>"
 
-text :: String -> FmtComb
-text = Const . C.pack
+showFmt :: ShowFmt -> FmtComb
+showFmt fmt = renderShowFmt fmt <$> ask
+
+text :: B.ByteString -> FmtComb
+text = pure
 
 mboxFrom :: ShowFormat
-mboxFrom = FmtComb $ mconcat [text "From ", Pure ShowMboxMsgSender, text " ", Pure ShowMboxMsgTime]
+mboxFrom = FmtComb $ mconcat [text "From ", showFmt ShowMboxMsgSender, text " ", showFmt ShowMboxMsgTime]
 
 oneLinerFmt :: ShowFormat
 oneLinerFmt =
   FmtComb $ mconcat $ intersperse (text " | ")
-          [align 40 $ ellipse 40 $ Pure ShowSubject, align 15 $ Pure ShowMIMEType, Pure ShowMessageID]
+          [align 40 $ ellipse 40 $ showFmt ShowSubject, align 15 $ showFmt ShowMIMEType, showFmt ShowMessageID]
 
-align :: Int -> FmtComb -> FmtComb
-align n x = Take n (x `mappend` Const (C.repeat ' '))
+align :: Int64 -> FmtComb -> FmtComb
+align n x = B.take n <$> (x `mappend` text (C.repeat ' '))
 
-ellipse :: Int -> FmtComb -> FmtComb
-ellipse n s = Take n s `mappend` text "..."
+ellipse :: Int64 -> FmtComb -> FmtComb
+ellipse n s = B.take n <$> s `mappend` text "..."
 
 myCunpack :: C.ByteString -> String
 myCunpack = C.unpack
@@ -246,7 +250,7 @@ unquote :: String -> Maybe String
 unquote ('<':xs) = listToMaybe [ys | zs == ">"] where (ys, zs) = break (=='>') xs
 unquote _        = Nothing
 
-renderShowFmt :: ShowFmt -> (Email,MboxMessage B.ByteString) -> B.ByteString
+renderShowFmt :: ShowFmt -> Message -> B.ByteString
 renderShowFmt ShowMboxMsgSender  = mboxMsgSender . snd
 renderShowFmt ShowMboxMsgTime    = mboxMsgTime . snd
 renderShowFmt ShowMboxMsgFile    = C.pack . mboxMsgFile . snd
@@ -259,13 +263,8 @@ renderShowFmt ShowMboxMsgBodyMD5 = C.pack . show . md5 . mboxMsgBody . snd
 renderShowFmt ShowMIMEType       = C.pack . showMIMEType . mimeType . mime_val_type . emailContent . fst
 renderShowFmt HaskellShow        = C.pack . show . fst
 
-renderFmtComb :: FmtComb -> (Email,MboxMessage B.ByteString) -> B.ByteString
-renderFmtComb Empty        = const B.empty
-renderFmtComb (Pure fmt)   = renderShowFmt fmt
-renderFmtComb (Const s)    = const s
-renderFmtComb (Take i x)   = B.take (fromIntegral i) . renderFmtComb x
-renderFmtComb (Quote x)    = C.pack . show . C.unpack . renderFmtComb x
-renderFmtComb (Append x y) = B.append <$> renderFmtComb x <*> renderFmtComb y
+renderFmtComb :: FmtComb -> Message -> B.ByteString
+renderFmtComb = flip evalReaderMsg
 
 hPutB' :: Handle -> B.ByteString -> IO ()
 hPutB' h = go
