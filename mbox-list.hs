@@ -13,7 +13,8 @@
 
 import Control.Arrow
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFiles,mboxMsgBody,opposite)
-import Email (readEmail,putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
+import Email (readEmail)
+import EmailFmt (putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
 import System.Console.GetOpt
 import Data.Accessor

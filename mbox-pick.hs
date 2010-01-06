@@ -19,7 +19,8 @@ import Data.Accessor.Template
 import Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.ByteString.Lazy.Char8 as C
 import Codec.Mbox (MboxMessage(..),parseOneMboxMessage)
-import Email (readEmail,putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
+import Email (readEmail)
+import EmailFmt (putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
 import System.Console.GetOpt
 import System.IO (FilePath, IOMode(..), stdin, openFile, hClose)
