@@ -1,4 +1,5 @@
-{-# LANGUAGE BangPatterns, ExistentialQuantification, TemplateHaskell #-}
+{-# LANGUAGE BangPatterns, ExistentialQuantification, TemplateHaskell,
+             TypeOperators #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : split-mbox
@@ -14,8 +15,7 @@
 import Control.Arrow
 import Codec.Mbox (Mbox(..),MboxMessage,Direction(..),msgYear,msgMonthYear,parseMboxFile,showMbox)
 import qualified Data.ByteString.Lazy.Char8 as C
-import Data.Accessor
-import Data.Accessor.Template
+import Data.Record.Label
 import Data.Char (toLower)
 import Data.List (groupBy)
 import Data.Maybe (fromMaybe)
@@ -30,6 +30,16 @@ chunks :: Int -> [a] -> [[a]]
 chunks _ [] = []
 chunks n xs = uncurry (:) $ second (chunks n) $ splitAt n xs
 
+-- Year is first
+data SplitBy = Year | Month
+  deriving (Show, Enum)
+
+data Settings = Settings { _help :: Bool, _splitBy :: SplitBy }
+$(mkLabels [''Settings])
+help    :: Settings :-> Bool
+splitBy :: Settings :-> SplitBy
+type Flag = Settings -> Settings
+
 splitMbox :: Eq a => (MboxMessage C.ByteString -> a) -> (MboxMessage C.ByteString -> String) -> String -> IO ()
 splitMbox keyMsg fmtMsg mboxfile = do
   -- this 'chunks' trick is to avoid a lazyness problem
@@ -42,20 +52,12 @@ splitMbox keyMsg fmtMsg mboxfile = do
 
 splitMboxWith :: Settings -> String -> IO ()
 splitMboxWith settings =
-  case splitBy settings of
+  case get splitBy settings of
     Year  -> splitMbox msgYear (show . msgYear)
     Month -> splitMbox msgMonthYear (uncurry (++) . (map toLower . show *** ('-':) . show) . msgMonthYear)
 
--- Year is first
-data SplitBy = Year | Month
-  deriving (Show, Enum)
-
-data Settings = Settings { help :: Bool, splitBy :: SplitBy }
-$(nameDeriveAccessors ''Settings $ Just.(++ "A"))
-type Flag = Settings -> Settings
-
 defaultSettings :: Settings
-defaultSettings = Settings { help = False, splitBy = Year }
+defaultSettings = Settings { _help = False, _splitBy = Year }
 
 usage :: String -> a
 usage msg = error (msg ++ "\n" ++ usageInfo header options)
@@ -63,11 +65,11 @@ usage msg = error (msg ++ "\n" ++ usageInfo header options)
 
 options :: [OptDescr Flag]
 options =
-  [ Option "?" ["help"] (NoArg (helpA ^= True)) "Show this help message"
+  [ Option "?" ["help"] (NoArg (set help True)) "Show this help message"
   , byOpt ]
 
 byOpt :: OptDescr Flag
-byOpt = Option "b" ["by"] (ReqArg ((splitByA ^=) . parseBy) "ARG") desc
+byOpt = Option "b" ["by"] (ReqArg (set splitBy . parseBy) "ARG") desc
   where parseBy = fromMaybe (usage "Bad argument") . (`lookup` args)
         args = map ((map toLower . show) &&& id) [ Year .. ]
         desc = "Split by " ++ show (map fst args)
@@ -77,7 +79,7 @@ main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if help opts
+  if get help opts
    then usage ""
    else
     case (nonopts, errs) of

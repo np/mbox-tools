@@ -10,7 +10,7 @@
 --
 --------------------------------------------------------------------
 
-{-# LANGUAGE BangPatterns, Rank2Types, TemplateHaskell,
+{-# LANGUAGE BangPatterns, Rank2Types, TemplateHaskell, TypeOperators,
              OverloadedStrings, GeneralizedNewtypeDeriving #-}
 module Email where
 
@@ -31,14 +31,18 @@ import Debug.Trace (trace)
 import Codec.Mbox (Mbox(..), MboxMessage(..))
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Char (toLower)
-import Data.Accessor.Template
+import Data.Record.Label
 
-data Email = Email { emailFields  :: [Field]
-                   , emailContent :: MIMEValueB
-                   , rawEmail     :: B.ByteString
+data Email = Email { _emailFields  :: [Field]
+                   , _emailContent :: MIMEValueB
+                   , _rawEmail     :: B.ByteString
                    }
   deriving (Show)
-$(nameDeriveAccessors ''Email $ Just.(++ "A"))
+
+$(mkLabels [''Email])
+emailFields  :: Email :-> [Field]
+emailContent :: Email :-> MIMEValueB
+rawEmail     :: Email :-> B.ByteString
 
 myCunpack :: C.ByteString -> String
 myCunpack = C.unpack
@@ -103,12 +107,12 @@ readEmail :: B.ByteString -> Email
 readEmail !orig = mkEmail $ fromMaybe (error "readEmail: parse error") $ splitAtNlNl orig
      where
         mkEmail ~(flds, body) =
-          Email { emailFields = headers
+          Email { _emailFields = headers
                 --, emailContent = parseMIMEBody optional_headers (fixCrlfB body)
                 --, emailContent = fmap C.pack $ parseMIMEBody optional_headers (fixCrlfS (C.unpack body))
                 --, emailContent = safeParseMIMEBodyByteString optional_headers (fixCrlfB body)
-                , emailContent = dynParseMIMEBody optional_headers body
-                , rawEmail = orig }
+                , _emailContent = dynParseMIMEBody optional_headers body
+                , _rawEmail = orig }
           where headers = readFields flds
                 optional_headers = [ (k,v) | OptionalField k v <- headers ]
 
@@ -122,10 +126,10 @@ stringOfField (OptionalField x y) = (map toLower x, y)
 stringOfField x = ("x-unknown", show x) -- TODO
 
 messageId :: Email -> Maybe String
-messageId msg = listToMaybe [ mid | MessageID mid <- emailFields msg ]
+messageId msg = listToMaybe [ mid | MessageID mid <- get emailFields msg ]
 
 messageSubject :: Email -> Maybe String
-messageSubject msg = listToMaybe [ mid | Subject mid <- emailFields msg ]
+messageSubject msg = listToMaybe [ mid | Subject mid <- get emailFields msg ]
 {-
   head ([show subject | Subject subject <- flds ]
       ++ ["(malformed subject) " ++ show subject | OptionalField "Subject" subject <- flds ]

@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, TypeOperators #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-grep
@@ -11,6 +11,7 @@
 --
 --------------------------------------------------------------------
 
+import Prelude hiding (mod)
 import Codec.Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFiles, opposite)
 import Email (Email(..),ShowFormat(..),fmtOpt,defaultShowFormat,
               readEmail,putEmails,showFormatsDoc,stringOfField)
@@ -19,15 +20,24 @@ import Text.ParserCombinators.Parsec (parse)
 import Hutt.Query (evalQueryMsg,parseQuery)
 import Hutt.Types(Msg(..),Dsc(..),MsgId(..),DscId(..),Query(..))
 import Data.Tree (Tree(..))
-import Data.Accessor
-import Data.Accessor.Template
+import Data.Record.Label
 import Control.Arrow
 import System.Console.GetOpt
 
+data Settings = Settings { _fmt  :: ShowFormat
+                         , _dir  :: Direction
+                         , _help :: Bool
+                         }
+$(mkLabels [''Settings])
+fmt  :: Settings :-> ShowFormat
+dir  :: Settings :-> Direction
+help :: Settings :-> Bool
+type Flag = Settings -> Settings
+
 grepMbox :: Settings -> String -> [String] -> IO ()
-grepMbox opts queryString = (mapM_ f =<<) . parseMboxFiles (dir opts)
+grepMbox opts queryString = (mapM_ f =<<) . parseMboxFiles (get dir opts)
   where query = either (error "malformed query") id $ parse parseQuery "<first-argument>" queryString
-        f     = putEmails (fmt opts)
+        f     = putEmails (get fmt opts)
                 . filter (emailMatchQuery query . fst)
                 . map ((readEmail . mboxMsgBody) &&& id) . mboxMessages
 
@@ -45,19 +55,12 @@ emailMatchQuery query email = evalQueryMsg (msg, dsc) query
                   , dscMsgs = Node () []
                   , dscLabels = [] }
 
-data Settings = Settings { fmt  :: ShowFormat
-                         , dir  :: Direction
-                         , help :: Bool
-                         }
-$(nameDeriveAccessors ''Settings $ Just.(++ "A"))
-type Flag = Settings -> Settings
-
 main :: IO ()
 main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if help opts
+  if get help opts
    then usage ""
    else
     case (nonopts, errs) of
@@ -66,9 +69,9 @@ main = do
       _                         -> usage (concat errs)
 
 defaultSettings :: Settings
-defaultSettings = Settings { fmt  = defaultShowFormat
-                           , dir  = Forward
-                           , help = False
+defaultSettings = Settings { _fmt  = defaultShowFormat
+                           , _dir  = Forward
+                           , _help = False
                            }
 
 usage :: String -> a
@@ -77,8 +80,8 @@ usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
 
 options :: [OptDescr Flag]
 options =
-  [ fmtOpt usage (fmtA ^=)
-  , Option "r" ["reverse"] (NoArg (dirA ^: opposite)) "Reverse the mbox order (latest firsts)"
-  , Option "?" ["help"]    (NoArg (helpA ^= True)) "Show this help message"
+  [ fmtOpt usage (set fmt)
+  , Option "r" ["reverse"] (NoArg (mod dir opposite)) "Reverse the mbox order (latest firsts)"
+  , Option "?" ["help"]    (NoArg (set help True)) "Show this help message"
   ]
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, TypeOperators #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-iter
@@ -11,6 +11,7 @@
 --
 --------------------------------------------------------------------
 
+import Prelude hiding (mod)
 -- import Control.Arrow
 import Control.Exception
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFiles,opposite,showMboxMessage)
@@ -20,8 +21,16 @@ import System.Exit
 import System.IO
 import qualified System.Process as P
 import qualified Data.ByteString.Lazy as L
-import Data.Accessor
-import Data.Accessor.Template
+import Data.Record.Label
+
+data Settings = Settings { _dir  :: Direction
+                         , _help :: Bool
+                         }
+$(mkLabels [''Settings])
+dir  :: Settings :-> Direction
+help :: Settings :-> Bool
+
+type Flag = Settings -> Settings
 
 systemWithStdin :: String -> L.ByteString -> IO ExitCode
 systemWithStdin shellCmd input = do
@@ -35,18 +44,11 @@ systemWithStdin shellCmd input = do
 iterMbox :: Settings -> String -> [String] -> IO ()
 iterMbox opts cmd mboxfiles =
   mapM_ (mapM_ (systemWithStdin cmd . showMboxMessage) . mboxMessages)
-    =<< parseMboxFiles (dir opts) mboxfiles
-
-data Settings = Settings { dir  :: Direction
-                         , help :: Bool
-                         }
-$(nameDeriveAccessors ''Settings $ Just.(++ "A"))
-
-type Flag = Settings -> Settings
+    =<< parseMboxFiles (get dir opts) mboxfiles
 
 defaultSettings :: Settings
-defaultSettings = Settings { dir  = Forward
-                           , help = False
+defaultSettings = Settings { _dir  = Forward
+                           , _help = False
                            }
 
 usage :: String -> a
@@ -55,8 +57,8 @@ usage msg = error $ unlines [msg, usageInfo header options]
 
 options :: [OptDescr Flag]
 options =
-  [ Option "r" ["reverse"] (NoArg (dirA ^: opposite)) "Reverse the mbox order (latest firsts)"
-  , Option "?" ["help"]    (NoArg (helpA ^= True)) "Show this help message"
+  [ Option "r" ["reverse"] (NoArg (mod dir opposite)) "Reverse the mbox order (latest firsts)"
+  , Option "?" ["help"]    (NoArg (set help True)) "Show this help message"
   ]
 
 main :: IO ()
@@ -64,7 +66,7 @@ main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if help opts
+  if get help opts
    then usage ""
    else
     case (nonopts, errs) of

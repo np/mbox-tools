@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, TypeOperators #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-pick
@@ -14,8 +14,7 @@
 import Control.Arrow
 import Control.Monad
 import Control.Applicative
-import Data.Accessor
-import Data.Accessor.Template
+import Data.Record.Label
 import Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.ByteString.Lazy.Char8 as C
 import Codec.Mbox (MboxMessage(..),parseOneMboxMessage)
@@ -33,23 +32,25 @@ mayRead s = case reads s of
 parseSeq :: C.ByteString -> Maybe [Integer]
 parseSeq = mapM (mayRead . C.unpack) . C.split ','
 
+data Settings = Settings { _fmt  :: ShowFormat
+                         , _help :: Bool
+                         }
+$(mkLabels [''Settings])
+help :: Settings :-> Bool
+fmt  :: Settings :-> ShowFormat
+type Flag = Settings -> Settings
+
 pickMbox :: Settings -> String -> Maybe FilePath -> IO ()
 pickMbox opts sequ' mmbox = do
   mbox <- maybe (return stdin) (`openFile` ReadMode) mmbox
   sequ <- maybe (fail "badly formatted comma separated offset sequence") return $ parseSeq $ C.pack sequ'
   mails <- mapM ((((readEmail . mboxMsgBody) &&& id) <$>) . parseOneMboxMessage (fromMaybe "" mmbox) mbox) sequ
-  putEmails (fmt opts) mails
+  putEmails (get fmt opts) mails
   hClose mbox
 
-data Settings = Settings { fmt  :: ShowFormat
-                         , help :: Bool
-                         }
-$(nameDeriveAccessors ''Settings $ Just.(++ "A"))
-type Flag = Settings -> Settings
-
 defaultSettings :: Settings
-defaultSettings = Settings { fmt  = defaultShowFormat
-                           , help = False
+defaultSettings = Settings { _fmt  = defaultShowFormat
+                           , _help = False
                            }
 
 usage :: String -> a
@@ -58,8 +59,8 @@ usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
 
 options :: [OptDescr Flag]
 options =
-  [ fmtOpt usage (fmtA ^=)
-  , Option "?" ["help"]    (NoArg (helpA ^= True)) "Show this help message"
+  [ fmtOpt usage (set fmt)
+  , Option "?" ["help"]    (NoArg (set help True)) "Show this help message"
   ]
 
 main :: IO ()
@@ -67,7 +68,7 @@ main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if help opts
+  if get help opts
    then usage ""
    else
     case (nonopts, errs) of

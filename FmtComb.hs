@@ -28,6 +28,7 @@ import Data.Maybe (fromMaybe)
 import Data.List (intersperse)
 import Data.Monoid (Monoid(..))
 import Data.Char (isSpace)
+import Data.Record.Label
 import Email
 
 type Message = (Email, MboxMessage B.ByteString)
@@ -89,7 +90,7 @@ subjectF
   = C.pack . fromMaybe "<NO-VALID-SUBJECT>" . messageSubject . fst <$> ask
 mimeTypeF
   = C.pack . showMIMEType . mimeType . mime_val_type
-           . emailContent . fst <$> ask
+           . get emailContent . fst <$> ask
 oneLinerF
   = mconcat $ intersperse (pure " | ")
        [ align 40 $ ellipse 40 $ subjectF

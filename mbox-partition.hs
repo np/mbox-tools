@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, TypeOperators #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-partition
@@ -13,10 +13,9 @@
 
 import Control.Applicative
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody,showMboxMessage)
-import Email (Email(..),readEmail)
+import Email (Email(..),emailFields,readEmail)
 import Text.ParserCombinators.Parsec.Rfc2822 (Field(MessageID))
-import Data.Accessor
-import Data.Accessor.Template
+import Data.Record.Label
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Set (fromList, member)
 import qualified Data.ByteString.Lazy.Char8 as C
@@ -34,12 +33,24 @@ progress_ = (>> progressStr "Finished\n") . sequence_ . zipWith (>>) (map (progr
 hPutStrLnC :: Handle -> C.ByteString -> IO ()
 hPutStrLnC h s = C.hPut h s >> C.hPut h (C.pack "\n")
 
+data Settings = Settings { _help :: Bool
+                         , _msgids :: String
+                         , _inside :: String
+                         , _outside :: String
+                         }
+$(mkLabels [''Settings])
+help    :: Settings :-> Bool
+msgids  :: Settings :-> String
+inside  :: Settings :-> String
+outside :: Settings :-> String
+type Flag = Settings -> Settings
+
 partitionMbox :: Settings -> [String] -> IO ()
 partitionMbox opts mboxfiles = do
-  msgids' <- (fromList . C.lines) <$> C.readFile (msgids opts)
+  msgids' <- (fromList . C.lines) <$> C.readFile (get msgids opts)
   let predicate = fromMaybe False . fmap (`member` msgids') . emailMsgId . readEmail . mboxMsgBody
-  hinside <- openFile (inside opts) AppendMode
-  houtside <- openFile (outside opts) AppendMode
+  hinside <- openFile (get inside opts) AppendMode
+  houtside <- openFile (get outside opts) AppendMode
   let onFile fp =
         progress_ . map (\m -> hPutStrLnC (if predicate m then hinside else houtside) (showMboxMessage m))
                   . mboxMessages
@@ -48,24 +59,16 @@ partitionMbox opts mboxfiles = do
   mapM_ hClose [hinside, houtside]
 
 emailMsgId :: Email -> Maybe C.ByteString
-emailMsgId m = listToMaybe [ removeAngles $ C.pack i | MessageID i <- emailFields m ]
+emailMsgId m = listToMaybe [ removeAngles $ C.pack i | MessageID i <- get emailFields m ]
 
 removeAngles :: C.ByteString -> C.ByteString
 removeAngles = C.takeWhile (/='>') . C.dropWhile (=='<')
 
-data Settings = Settings { help :: Bool
-                         , msgids :: String
-                         , inside :: String
-                         , outside :: String
-                         }
-$(nameDeriveAccessors ''Settings $ Just.(++ "A"))
-type Flag = Settings -> Settings
-
 defaultSettings :: Settings
-defaultSettings = Settings { help = False
-                           , msgids = ""
-                           , inside = ""
-                           , outside = "" }
+defaultSettings = Settings { _help = False
+                           , _msgids = ""
+                           , _inside = ""
+                           , _outside = "" }
 
 usage :: String -> a
 usage msg = error (msg ++ "\n" ++ usageInfo header options)
@@ -73,10 +76,10 @@ usage msg = error (msg ++ "\n" ++ usageInfo header options)
 
 options :: [OptDescr Flag]
 options =
-  [ Option "m" ["msgids"]  (ReqArg (msgidsA ^=) "FILE") "A file with message-IDs"
-  , Option "i" ["inside"]  (ReqArg (insideA ^=) "FILE") "Will receive messages referenced by the 'msgids' file"
-  , Option "o" ["outside"] (ReqArg (outsideA ^=) "FILE") "Will receive messages *NOT* referenced by the 'msgids' file"
-  , Option "?" ["help"]    (NoArg  (helpA ^= True)) "Show this help message"
+  [ Option "m" ["msgids"]  (ReqArg (set msgids) "FILE") "A file with message-IDs"
+  , Option "i" ["inside"]  (ReqArg (set inside) "FILE") "Will receive messages referenced by the 'msgids' file"
+  , Option "o" ["outside"] (ReqArg (set outside) "FILE") "Will receive messages *NOT* referenced by the 'msgids' file"
+  , Option "?" ["help"]    (NoArg  (set help True)) "Show this help message"
   ]
 
 main :: IO ()
@@ -85,8 +88,8 @@ main = do
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
   case (nonopts, errs) of
-    _ | help opts  -> usage ""
-    (_, _:_)       -> usage (concat errs)
-    ([], _)        -> usage "Too few arguments (mbox-file missing)"
-    (mboxfiles, _) -> partitionMbox opts mboxfiles
+    _ | get help opts -> usage ""
+    (_, _:_)          -> usage (concat errs)
+    ([], _)           -> usage "Too few arguments (mbox-file missing)"
+    (mboxfiles, _)    -> partitionMbox opts mboxfiles
 

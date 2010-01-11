@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, TypeOperators #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-list
@@ -11,32 +11,36 @@
 --
 --------------------------------------------------------------------
 
+import Prelude hiding (mod)
 import Control.Arrow
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFiles,mboxMsgBody,opposite)
 import Email (readEmail)
 import EmailFmt (putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
 import System.Console.GetOpt
-import Data.Accessor
-import Data.Accessor.Template
+import Data.Record.Label
 
-listMbox :: Settings -> [String] -> IO ()
-listMbox opts mboxfiles =
-  mapM_ (putEmails (fmt opts) . map ((readEmail . mboxMsgBody) &&& id) . mboxMessages)
-    =<< parseMboxFiles (dir opts) mboxfiles
-
-data Settings = Settings { fmt  :: ShowFormat
-                         , dir  :: Direction
-                         , help :: Bool
+data Settings = Settings { _fmt  :: ShowFormat
+                         , _dir  :: Direction
+                         , _help :: Bool
                          }
-$(nameDeriveAccessors ''Settings $ Just.(++ "A"))
+$(mkLabels [''Settings])
+help :: Settings :-> Bool
+dir  :: Settings :-> Direction
+fmt  :: Settings :-> ShowFormat
+
 
 type Flag = Settings -> Settings
 
+listMbox :: Settings -> [String] -> IO ()
+listMbox opts mboxfiles =
+  mapM_ (putEmails (get fmt opts) . map ((readEmail . mboxMsgBody) &&& id) . mboxMessages)
+    =<< parseMboxFiles (get dir opts) mboxfiles
+
 defaultSettings :: Settings
-defaultSettings = Settings { fmt  = defaultShowFormat
-                           , dir  = Forward
-                           , help = False
+defaultSettings = Settings { _fmt  = defaultShowFormat
+                           , _dir  = Forward
+                           , _help = False
                            }
 
 usage :: String -> a
@@ -45,9 +49,9 @@ usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
 
 options :: [OptDescr Flag]
 options =
-  [ fmtOpt usage (fmtA ^=)
-  , Option "r" ["reverse"] (NoArg (dirA ^: opposite)) "Reverse the mbox order (latest firsts)"
-  , Option "?" ["help"]    (NoArg (helpA ^= True)) "Show this help message"
+  [ fmtOpt usage (set fmt)
+  , Option "r" ["reverse"] (NoArg (mod dir opposite)) "Reverse the mbox order (latest firsts)"
+  , Option "?" ["help"]    (NoArg (set help True)) "Show this help message"
   ]
 
 main :: IO ()
@@ -55,7 +59,7 @@ main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if help opts
+  if get help opts
    then usage ""
    else
     case (nonopts, errs) of
