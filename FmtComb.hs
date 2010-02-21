@@ -20,7 +20,6 @@ import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString.Char8 as S8
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Lazy as B
-import qualified Data.ByteString.Lazy.Internal as B
 import Codec.MIME.Type (MIMEValue(..), Type(..), showMIMEType)
 import Codec.Mbox (MboxMessage(..), showMboxMessage)
 import qualified Data.Digest.Pure.MD5 as MD5 (md5)

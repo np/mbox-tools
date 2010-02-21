@@ -15,7 +15,6 @@
 module EmailFmt where
 
 import Control.Applicative
-import Control.Monad.Reader
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString.Lazy.Internal as B

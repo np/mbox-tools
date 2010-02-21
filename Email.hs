@@ -15,20 +15,18 @@
 module Email where
 
 import Control.Applicative
-import Control.Monad.Reader
 import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString.Lazy as B
-import qualified Data.ByteString.Lazy.Internal as B
 import Codec.MIME.Type (MIMEValueB)
 import Codec.MIME.Parse (parseMIMEBody, safeParseMIMEBodyByteString, WithoutCRLF(..))
 import Text.ParserCombinators.Parsec.Rfc2822 (Field(..), fields)
 import Text.ParserCombinators.Parsec (parse)
 import EOL (fixCrlfS, fixCrlfB)
-import System.IO.Error (ioError, catch, isDoesNotExistError)
+import System.IO.Error (isDoesNotExistError)
 import System.Environment (getEnv)
 import System.IO.Unsafe (unsafePerformIO)
 import Debug.Trace (trace)
-import Codec.Mbox (Mbox(..), MboxMessage, mboxMsgBody)
+import Codec.Mbox (Mbox(..), mboxMsgBody)
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Char (toLower)
 import Data.Record.Label

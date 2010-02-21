@@ -12,7 +12,6 @@
 --------------------------------------------------------------------
 
 import Control.Arrow
-import Control.Monad
 import Control.Applicative
 import Data.Record.Label
 import Data.Maybe (fromMaybe, listToMaybe)
@@ -22,7 +21,7 @@ import Email (readEmail)
 import EmailFmt (putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
 import System.Console.GetOpt
-import System.IO (FilePath, IOMode(..), stdin, openFile, hClose)
+import System.IO (IOMode(..), stdin, openFile, hClose)
 
 mayRead :: Read a => String -> Maybe a
 mayRead s = case reads s of
