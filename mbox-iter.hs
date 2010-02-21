@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, TypeOperators #-}
+{-# LANGUAGE TemplateHaskell, TypeOperators, ScopedTypeVariables #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-iter
@@ -36,7 +36,7 @@ systemWithStdin :: String -> L.ByteString -> IO ExitCode
 systemWithStdin shellCmd input = do
   (Just stdinHdl, _, _, pHdl) <-
      P.createProcess (P.shell shellCmd){ P.std_in = P.CreatePipe }
-  handle (\(IOException _) -> return ()) $ do
+  handle (\(_ :: IOException) -> return ()) $ do
     L.hPut stdinHdl input
     hClose stdinHdl
   P.waitForProcess pHdl
