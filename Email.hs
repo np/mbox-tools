@@ -28,7 +28,7 @@ import System.IO.Error (ioError, catch, isDoesNotExistError)
 import System.Environment (getEnv)
 import System.IO.Unsafe (unsafePerformIO)
 import Debug.Trace (trace)
-import Codec.Mbox (Mbox(..), MboxMessage(..))
+import Codec.Mbox (Mbox(..), MboxMessage, mboxMsgBody)
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Char (toLower)
 import Data.Record.Label
@@ -117,7 +117,7 @@ readEmail !orig = mkEmail $ fromMaybe (error "readEmail: parse error") $ splitAt
                 optional_headers = [ (k,v) | OptionalField k v <- headers ]
 
 readMboxEmails :: Mbox B.ByteString -> [Email]
-readMboxEmails = map (readEmail . mboxMsgBody) . mboxMessages
+readMboxEmails = map (readEmail . get mboxMsgBody) . mboxMessages
 
 stringOfField :: Field -> (String, String)
 stringOfField (MessageID x) = ("message-id", fromMaybe (error "impossible: Email.stringOfField") $ unquote x)

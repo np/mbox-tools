@@ -13,7 +13,7 @@ average xs = s / fromIntegral l
         f (P a b) x = P (a + x) (b + 1)
 
 mboxAverageSize :: Mbox B.ByteString -> Double
-mboxAverageSize = average . map (fromIntegral . B.length . mboxMsgBody) . mboxMessages
+mboxAverageSize = average . map (fromIntegral . B.length . get mboxMsgBody) . mboxMessages
 
 main :: IO ()
 main = do putStrLn "Reading from stdin..."

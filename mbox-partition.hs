@@ -48,7 +48,7 @@ type Flag = Settings -> Settings
 partitionMbox :: Settings -> [String] -> IO ()
 partitionMbox opts mboxfiles = do
   msgids' <- (fromList . C.lines) <$> C.readFile (get msgids opts)
-  let predicate = fromMaybe False . fmap (`member` msgids') . emailMsgId . readEmail . mboxMsgBody
+  let predicate = fromMaybe False . fmap (`member` msgids') . emailMsgId . readEmail . get mboxMsgBody
   hinside <- openFile (get inside opts) AppendMode
   houtside <- openFile (get outside opts) AppendMode
   let onFile fp =

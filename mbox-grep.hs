@@ -39,7 +39,7 @@ grepMbox opts queryString = (mapM_ f =<<) . parseMboxFiles (get dir opts)
   where query = either (error "malformed query") id $ parse parseQuery "<first-argument>" queryString
         f     = putEmails (get fmt opts)
                 . filter (emailMatchQuery query . fst)
-                . map ((readEmail . mboxMsgBody) &&& id) . mboxMessages
+                . map ((readEmail . get mboxMsgBody) &&& id) . mboxMessages
 
 emailMatchQuery :: Query -> Email -> Bool
 emailMatchQuery query email = evalQueryMsg (msg, dsc) query

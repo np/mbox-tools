@@ -17,7 +17,7 @@ import Control.Applicative
 import Data.Record.Label
 import Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.ByteString.Lazy.Char8 as C
-import Codec.Mbox (MboxMessage(..),parseOneMboxMessage)
+import Codec.Mbox (mboxMsgBody,parseOneMboxMessage)
 import Email (readEmail)
 import EmailFmt (putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
@@ -44,7 +44,7 @@ pickMbox :: Settings -> String -> Maybe FilePath -> IO ()
 pickMbox opts sequ' mmbox = do
   mbox <- maybe (return stdin) (`openFile` ReadMode) mmbox
   sequ <- maybe (fail "badly formatted comma separated offset sequence") return $ parseSeq $ C.pack sequ'
-  mails <- mapM ((((readEmail . mboxMsgBody) &&& id) <$>) . parseOneMboxMessage (fromMaybe "" mmbox) mbox) sequ
+  mails <- mapM ((((readEmail . get mboxMsgBody) &&& id) <$>) . parseOneMboxMessage (fromMaybe "" mmbox) mbox) sequ
   putEmails (get fmt opts) mails
   hClose mbox
 

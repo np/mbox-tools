@@ -70,16 +70,19 @@ strip = S8.unpack . stripS . S8.pack
 split :: Char -> String -> [String]
 split c = map S8.unpack . S8.split c . S8.pack
 
+mkF :: (MboxMessage B.ByteString -> a) -> ReaderMsg a
+mkF f = asks (f . snd)
+
 mboxMsgSenderF, mboxMsgTimeF, mboxFromF, mboxMsgFileF, mboxMsgOffsetF,
   mboxMsgF, mboxMsgBodyF, messageIDF, subjectF, mimeTypeF, emailShown,
   oneLinerF :: FmtComb
 
-mboxMsgTimeF   = mboxMsgTime . snd <$> ask
-mboxMsgSenderF = mboxMsgSender . snd <$> ask
-mboxMsgFileF   = C.pack . mboxMsgFile . snd <$> ask
-mboxMsgOffsetF = showC . mboxMsgOffset . snd <$> ask
-mboxMsgF       = flip C.snoc '\n' . showMboxMessage . snd <$> ask
-mboxMsgBodyF   = mboxMsgBody . snd <$> ask
+mboxMsgTimeF   = mkF _mboxMsgTime
+mboxMsgSenderF = mkF _mboxMsgSender
+mboxMsgFileF   = mkF $ C.pack . _mboxMsgFile
+mboxMsgOffsetF = mkF $ showC . _mboxMsgOffset
+mboxMsgF       = mkF $ flip C.snoc '\n' . showMboxMessage
+mboxMsgBodyF   = mkF _mboxMsgBody
 emailShown     = showC . fst <$> ask
 mboxFromF
   = mconcat [pure "From ", mboxMsgSenderF, pure " ", mboxMsgTimeF]

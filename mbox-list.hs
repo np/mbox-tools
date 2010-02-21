@@ -39,7 +39,7 @@ type Flag = Settings -> Settings
 listMbox :: Settings -> [String] -> IO ()
 listMbox opts mboxfiles =
   mapM_ (putEmails (get fmt opts) .
-         map ((readEmail . mboxMsgBody) &&& id) .
+         map ((readEmail . get mboxMsgBody) &&& id) .
          maybe id take (get takeOpt opts) .
          maybe id drop (get dropOpt opts) .
          mboxMessages)
