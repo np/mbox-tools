@@ -70,3 +70,6 @@ executable mbox-iter
     main-is: mbox-iter.hs
     ghc-options: -Wall
     build-depends: process
+executable mbox-from-files
+    main-is: mbox-from-files.hs
+    ghc-options: -Wall
