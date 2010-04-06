@@ -30,7 +30,7 @@ msgFromFile :: FilePath -> IO (MboxMessage B.ByteString)
 msgFromFile fp =
  do contents <- B.readFile fp
     return $ MboxMessage { _mboxMsgSender = B.pack "XXX"
-                         , _mboxMsgTime   = B.empty
+                         , _mboxMsgTime   = B.pack "Thu Jan 01 01:00:00 +0100 1970"
                          , _mboxMsgBody   = contents
                          , _mboxMsgFile   = fp
                          , _mboxMsgOffset = undefined }
