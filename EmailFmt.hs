@@ -45,12 +45,10 @@ showFormatsDoc = unlines $
        ["Message formatting:"
        ,""
        ,"  fmt  ::= 'mbox'"
-       ,"         | ( '%(' <fcts>? <name> ')' | <string> )*"
+       ,"         | ( '%(' (<fct> '.')* <name> ')' | <string> )*"
        ,"  name ::="] ++
   map (("         | '" ++) . (++ "'") . fst) fmtCombs ++
-       ["  fcts ::= <fct>"
-       ,"         | <fct> '.' <fcts>"
-       ,"  fct  ::="] ++
+       ["  fct  ::="] ++
   map (("         | '" ++) . (++ "'") . fst) fmtMods ++
   map (("         | '" ++) . (++ "' <int>") . fst) intFmtMods ++
        [""
