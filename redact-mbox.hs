@@ -1,7 +1,7 @@
 --------------------------------------------------------------------
 -- |
 -- Executable : redact-mbox
--- Copyright : (c) Nicolas Pouillard 2008, 2009
+-- Copyright : (c) Nicolas Pouillard 2008, 2009, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>

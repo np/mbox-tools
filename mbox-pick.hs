@@ -2,7 +2,7 @@
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-pick
--- Copyright : (c) Nicolas Pouillard 2008, 2009
+-- Copyright : (c) Nicolas Pouillard 2008, 2009, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
@@ -13,7 +13,7 @@
 
 import Control.Arrow
 import Control.Applicative
-import Data.Record.Label
+import Data.Label
 import Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.ByteString.Lazy.Char8 as C
 import Codec.Mbox (mboxMsgBody,parseOneMboxMessage)
@@ -35,8 +35,7 @@ data Settings = Settings { _fmt  :: ShowFormat
                          , _help :: Bool
                          }
 $(mkLabels [''Settings])
-help :: Settings :-> Bool
-fmt  :: Settings :-> ShowFormat
+
 type Flag = Settings -> Settings
 
 pickMbox :: Settings -> String -> Maybe FilePath -> IO ()

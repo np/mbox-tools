@@ -1,7 +1,7 @@
 --------------------------------------------------------------------
 -- |
 -- Module    : EOL
--- Copyright : (c) Nicolas Pouillard 2008, 2009
+-- Copyright : (c) Nicolas Pouillard 2008, 2009, 2010, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>

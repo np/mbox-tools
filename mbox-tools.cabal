@@ -21,12 +21,13 @@ flag useless
   Default: False
 
 Library
-    Build-depends: base(>=3 && <5), containers>=0.1, bytestring>=0.9, parsec>=2.1 && <3.0,
-                   transformers, monads-fd, fclabels>=0.4.1, pureMD5,
-                   mbox>=0.1, hsemail>=1.3.1, mime>=0.3.1
+    Build-depends: base(>=3 && <5), containers>=0.1, bytestring>=0.9, parsec,
+                   transformers, monads-fd, fclabels>=1.0, pureMD5,
+                   codec-mbox>=0.1, hsemail>=1.3.1
+                   -- TMP-NO-MIME, mime-bytestring
     exposed-modules: MboxTools
--- hsemail-1.3.1 is not released
--- mime-0.3.1 is not yet released
+-- TODO hsemail-1.3.1 is not released
+-- mime-bytestring is not yet released
 
 executable mbox-counting
     main-is: mbox-counting.hs

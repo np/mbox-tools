@@ -1,7 +1,7 @@
 --------------------------------------------------------------------
 -- |
 -- Module    : EmailFmt
--- Copyright : (c) Nicolas Pouillard 2010
+-- Copyright : (c) Nicolas Pouillard 2010, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>

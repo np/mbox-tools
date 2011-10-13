@@ -1,7 +1,7 @@
 --------------------------------------------------------------------
 -- |
 -- Module    : FmtComb
--- Copyright : (c) Nicolas Pouillard 2010
+-- Copyright : (c) Nicolas Pouillard 2010, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
@@ -20,14 +20,16 @@ import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString.Char8 as S8
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Lazy as B
+{- TMP-NO-MIME
 import Codec.MIME.Type (MIMEValue(..), Type(..), showMIMEType)
+-}
 import Codec.Mbox (MboxMessage(..), showMboxMessage)
 import qualified Data.Digest.Pure.MD5 as MD5 (md5)
 import Data.Maybe (fromMaybe)
 import Data.List (intersperse)
 import Data.Monoid (Monoid(..))
 import Data.Char (isSpace)
-import Data.Record.Label
+import Data.Label
 import Email
 
 type Message = (Email, MboxMessage B.ByteString)
@@ -73,7 +75,7 @@ mkF :: (MboxMessage B.ByteString -> a) -> ReaderMsg a
 mkF f = asks (f . snd)
 
 mboxMsgSenderF, mboxMsgTimeF, mboxFromF, mboxMsgFileF, mboxMsgOffsetF,
-  mboxMsgF, mboxMsgBodyF, messageIDF, subjectF, mimeTypeF, emailShown,
+  mboxMsgF, mboxMsgBodyF, messageIDF, subjectF, {-TMP-NO-MIME mimeTypeF,-} emailShown,
   oneLinerF :: FmtComb
 
 mboxMsgTimeF   = mkF _mboxMsgTime
@@ -90,13 +92,15 @@ messageIDF
            . (>>= unquote) . messageId . fst <$> ask
 subjectF
   = C.pack . fromMaybe "<NO-VALID-SUBJECT>" . messageSubject . fst <$> ask
+{- TMP-NO-MIME
 mimeTypeF
   = C.pack . showMIMEType . mimeType . mime_val_type
            . get emailContent . fst <$> ask
+-}
 oneLinerF
   = mconcat $ intersperse (pure " | ")
        [ align 40 $ ellipse 40 $ subjectF
-       , align 15 $ mimeTypeF, messageIDF ]
+       , {- TMP-NO-MIME align 15 $ mimeTypeF,-} messageIDF ]
 
 align :: Int -> FmtMod
 align n x = B.take (fi n) <$> (x `mappend` pure (C.repeat ' '))
@@ -120,7 +124,7 @@ fmtCombs = [ ("one",           (oneLinerF      , "One line per email with: subje
            , ("offset",        (mboxMsgOffsetF , "Mbox Offset"))
            , ("mboxmsg",       (mboxMsgF       , "Mbox Msg"))
            , ("mboxmsgbody",   (mboxMsgBodyF   , "Mbox Msg Body"))
-           , ("mimetype",      (mimeTypeF      , "MIME type"))
+           -- TMP-NO-MIME , ("mimetype",      (mimeTypeF      , "MIME type"))
            , ("fromline",      (mboxFromF      , "Mbox From Line [as 'From %(mboxmsgsender) %(mboxmsgtime)']"))
            , ("mid",           (messageIDF     , "Message ID"))
            ]

@@ -2,7 +2,7 @@
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-grep
--- Copyright : (c) Nicolas Pouillard 2008, 2009
+-- Copyright : (c) Nicolas Pouillard 2008, 2009, 2010, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
@@ -11,7 +11,6 @@
 --
 --------------------------------------------------------------------
 
-import Prelude hiding (mod)
 import Codec.Mbox (Mbox(..), MboxMessage(..), Direction(..), parseMboxFiles, opposite)
 import Email (Email(..),ShowFormat(..),fmtOpt,defaultShowFormat,
               readEmail,putEmails,showFormatsDoc,stringOfField)
@@ -20,7 +19,7 @@ import Text.ParserCombinators.Parsec (parse)
 import Hutt.Query (evalQueryMsg,parseQuery)
 import Hutt.Types(Msg(..),Dsc(..),MsgId(..),DscId(..),Query(..))
 import Data.Tree (Tree(..))
-import Data.Record.Label
+import Data.Label
 import Control.Arrow
 import System.Console.GetOpt
 
@@ -29,9 +28,6 @@ data Settings = Settings { _fmt  :: ShowFormat
                          , _help :: Bool
                          }
 $(mkLabels [''Settings])
-fmt  :: Settings :-> ShowFormat
-dir  :: Settings :-> Direction
-help :: Settings :-> Bool
 type Flag = Settings -> Settings
 
 grepMbox :: Settings -> String -> [String] -> IO ()
@@ -81,7 +77,7 @@ usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
 options :: [OptDescr Flag]
 options =
   [ fmtOpt usage (set fmt)
-  , Option "r" ["reverse"] (NoArg (mod dir opposite)) "Reverse the mbox order (latest firsts)"
+  , Option "r" ["reverse"] (NoArg (modify dir opposite)) "Reverse the mbox order (latest firsts)"
   , Option "?" ["help"]    (NoArg (set help True)) "Show this help message"
   ]
 

@@ -2,7 +2,7 @@
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-list
--- Copyright : (c) Nicolas Pouillard 2008, 2009
+-- Copyright : (c) Nicolas Pouillard 2008, 2009, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
@@ -11,14 +11,14 @@
 --
 --------------------------------------------------------------------
 
-import Prelude hiding (mod)
+import Prelude
 import Control.Arrow
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFiles,mboxMsgBody,opposite)
 import Email (readEmail)
 import EmailFmt (putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
 import System.Console.GetOpt
-import Data.Record.Label
+import Data.Label
 
 data Settings = Settings { _fmt      :: ShowFormat
                          , _dir      :: Direction
@@ -27,12 +27,6 @@ data Settings = Settings { _fmt      :: ShowFormat
                          , _help     :: Bool
                          }
 $(mkLabels [''Settings])
-help     :: Settings :-> Bool
-dir      :: Settings :-> Direction
-takeOpt  :: Settings :-> Maybe Int
-dropOpt  :: Settings :-> Maybe Int
-fmt      :: Settings :-> ShowFormat
-
 
 type Flag = Settings -> Settings
 
@@ -66,10 +60,10 @@ maybeIntArg l = ReqArg (set l . Just . read) "NUM"
 options :: [OptDescr Flag]
 options =
   [ fmtOpt usage (set fmt)
-  , Option "r" ["reverse"]  (NoArg (mod dir opposite))  "Reverse the mbox order (latest firsts)"
-  , Option "d" ["drop"]     (maybeIntArg dropOpt)       "Drop the NUM firsts"
-  , Option "t" ["take"]     (maybeIntArg takeOpt)       "Take the NUM firsts (happens after --drop)"
-  , Option "?" ["help"]     (NoArg (set help True))     "Show this help message"
+  , Option "r" ["reverse"]  (NoArg (modify dir opposite)) "Reverse the mbox order (latest firsts)"
+  , Option "d" ["drop"]     (maybeIntArg dropOpt)         "Drop the NUM firsts"
+  , Option "t" ["take"]     (maybeIntArg takeOpt)         "Take the NUM firsts (happens after --drop)"
+  , Option "?" ["help"]     (NoArg (set help True))       "Show this help message"
   ]
 
 main :: IO ()

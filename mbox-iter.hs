@@ -2,7 +2,7 @@
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-iter
--- Copyright : (c) Nicolas Pouillard 2009
+-- Copyright : (c) Nicolas Pouillard 2009, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
@@ -11,7 +11,6 @@
 --
 --------------------------------------------------------------------
 
-import Prelude hiding (mod)
 -- import Control.Arrow
 import Control.Exception
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFiles,opposite,showMboxMessage)
@@ -21,14 +20,12 @@ import System.Exit
 import System.IO
 import qualified System.Process as P
 import qualified Data.ByteString.Lazy as L
-import Data.Record.Label
+import Data.Label
 
 data Settings = Settings { _dir  :: Direction
                          , _help :: Bool
                          }
 $(mkLabels [''Settings])
-dir  :: Settings :-> Direction
-help :: Settings :-> Bool
 
 type Flag = Settings -> Settings
 
@@ -57,7 +54,7 @@ usage msg = error $ unlines [msg, usageInfo header options]
 
 options :: [OptDescr Flag]
 options =
-  [ Option "r" ["reverse"] (NoArg (mod dir opposite)) "Reverse the mbox order (latest firsts)"
+  [ Option "r" ["reverse"] (NoArg (modify dir opposite)) "Reverse the mbox order (latest firsts)"
   , Option "?" ["help"]    (NoArg (set help True)) "Show this help message"
   ]
 

@@ -2,7 +2,7 @@
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-from-files
--- Copyright : (c) Nicolas Pouillard 2010
+-- Copyright : (c) Nicolas Pouillard 2010, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
@@ -16,13 +16,12 @@ import Control.Monad (join)
 import Codec.Mbox (Mbox(..),MboxMessage(..),showMbox)
 import System.Environment (getArgs)
 import System.Console.GetOpt
-import Data.Record.Label
+import Data.Label
 import qualified Data.ByteString.Lazy.Char8 as B
 
 data Settings = Settings { _help :: Bool }
 
 $(mkLabels [''Settings])
-help     :: Settings :-> Bool
 
 type Flag = Settings -> Settings
 

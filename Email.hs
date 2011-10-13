@@ -1,7 +1,7 @@
 --------------------------------------------------------------------
 -- |
 -- Module    : Email
--- Copyright : (c) Nicolas Pouillard 2008, 2009, 2010
+-- Copyright : (c) Nicolas Pouillard 2008, 2009, 2010, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
@@ -17,30 +17,30 @@ module Email where
 import Control.Applicative
 import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString.Lazy as B
+{- TMP-NO-MIME
 import Codec.MIME.Type (MIMEValueB)
 import Codec.MIME.Parse (parseMIMEBody, safeParseMIMEBodyByteString, WithoutCRLF(..))
-import Text.ParserCombinators.Parsec.Rfc2822 (Field(..), fields)
-import Text.ParserCombinators.Parsec (parse)
-import EOL (fixCrlfS, fixCrlfB)
-import System.IO.Error (isDoesNotExistError)
-import System.Environment (getEnv)
 import System.IO.Unsafe (unsafePerformIO)
 import Debug.Trace (trace)
+-}
+import Text.ParserCombinators.Parsec.Rfc2822 (Field(..), fields)
+import Text.ParserCombinators.Parsec (parse)
+import EOL (fixCrlfS {- TMP-NO-MIME, fixCrlfB -})
+import System.IO.Error (isDoesNotExistError)
+import System.Environment (getEnv)
 import Codec.Mbox (Mbox(..), mboxMsgBody)
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Char (toLower)
-import Data.Record.Label
+import Data.Label
 
 data Email = Email { _emailFields  :: [Field]
-                   , _emailContent :: MIMEValueB
+                   -- TMP-NO-MIME , _emailContent :: MIMEValueB
+                   , _emailContent :: B.ByteString
                    , _rawEmail     :: B.ByteString
                    }
   deriving (Show)
 
 $(mkLabels [''Email])
-emailFields  :: Email :-> [Field]
-emailContent :: Email :-> MIMEValueB
-rawEmail     :: Email :-> B.ByteString
 
 myCunpack :: C.ByteString -> String
 myCunpack = C.unpack
@@ -79,6 +79,7 @@ safeGetEnv s = (Just <$> getEnv s) `catch` \e -> if isDoesNotExistError e
                                                  then return Nothing
                                                  else ioError e -- I'm wondering if this could happen
 
+{- TMP-NO-MIME
 {-# NOINLINE dynParseMIMEBody #-}
 dynParseMIMEBody :: [(String, String)] -> B.ByteString -> MIMEValueB
 dynParseMIMEBody = unsafePerformIO $
@@ -90,6 +91,7 @@ dynParseMIMEBody = unsafePerformIO $
       Just "bytestringcrlf" -> \hdr -> fmap withoutCRLF . parseMIMEBody hdr . WithoutCRLF
       Just other            -> trace ("unknown MIME_PARSING_MODE " ++ other) parseMIMEBody
       Nothing               -> parseMIMEBody
+-}
 
 splitAtNlNl :: B.ByteString -> Maybe (B.ByteString, B.ByteString)
 splitAtNlNl !orig = go 0 orig
@@ -109,10 +111,15 @@ readEmail !orig = mkEmail $ fromMaybe (error "readEmail: parse error") $ splitAt
                 --, emailContent = parseMIMEBody optional_headers (fixCrlfB body)
                 --, emailContent = fmap C.pack $ parseMIMEBody optional_headers (fixCrlfS (C.unpack body))
                 --, emailContent = safeParseMIMEBodyByteString optional_headers (fixCrlfB body)
+                {- TMP-NO-MIME
                 , _emailContent = dynParseMIMEBody optional_headers body
+                -}
+                , _emailContent = body
                 , _rawEmail = orig }
           where headers = readFields flds
+          {- TMP-NO-MIME
                 optional_headers = [ (k,v) | OptionalField k v <- headers ]
+          -}
 
 readMboxEmails :: Mbox B.ByteString -> [Email]
 readMboxEmails = map (readEmail . get mboxMsgBody) . mboxMessages

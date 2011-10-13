@@ -3,7 +3,7 @@
 --------------------------------------------------------------------
 -- |
 -- Executable : split-mbox
--- Copyright : (c) Nicolas Pouillard 2008, 2009
+-- Copyright : (c) Nicolas Pouillard 2008, 2009, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
@@ -15,7 +15,7 @@
 import Control.Arrow
 import Codec.Mbox (Mbox(..),MboxMessage,Direction(..),msgYear,msgMonthYear,parseMboxFile,showMbox)
 import qualified Data.ByteString.Lazy.Char8 as C
-import Data.Record.Label
+import Data.Label
 import Data.Char (toLower)
 import Data.List (groupBy)
 import Data.Maybe (fromMaybe)
@@ -36,8 +36,6 @@ data SplitBy = Year | Month
 
 data Settings = Settings { _help :: Bool, _splitBy :: SplitBy }
 $(mkLabels [''Settings])
-help    :: Settings :-> Bool
-splitBy :: Settings :-> SplitBy
 type Flag = Settings -> Settings
 
 splitMbox :: Eq a => (MboxMessage C.ByteString -> a) -> (MboxMessage C.ByteString -> String) -> String -> IO ()

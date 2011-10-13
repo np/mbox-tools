@@ -2,7 +2,7 @@
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-partition
--- Copyright : (c) Nicolas Pouillard 2008, 2009
+-- Copyright : (c) Nicolas Pouillard 2008, 2009, 2011
 -- License   : BSD3
 --
 -- Maintainer: Nicolas Pouillard <nicolas.pouillard@gmail.com>
@@ -15,7 +15,7 @@ import Control.Applicative
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody,showMboxMessage)
 import Email (Email(..),emailFields,readEmail)
 import Text.ParserCombinators.Parsec.Rfc2822 (Field(MessageID))
-import Data.Record.Label
+import Data.Label
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Set (fromList, member)
 import qualified Data.ByteString.Lazy.Char8 as C
@@ -39,10 +39,6 @@ data Settings = Settings { _help :: Bool
                          , _outside :: String
                          }
 $(mkLabels [''Settings])
-help    :: Settings :-> Bool
-msgids  :: Settings :-> String
-inside  :: Settings :-> String
-outside :: Settings :-> String
 type Flag = Settings -> Settings
 
 partitionMbox :: Settings -> [String] -> IO ()
