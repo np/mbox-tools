@@ -1,15 +1,15 @@
 Name:           mbox-tools
 Cabal-Version:  >=1.2
-Version:        0.1
+Version:        0.2.0.0
 License:        BSD3
 License-File:   LICENSE
 Copyright:      (c) Nicolas Pouillard
 Author:         Nicolas Pouillard
 Maintainer:     Nicolas Pouillard <nicolas.pouillard@gmail.com>
-Category:       ...
-Synopsis:       ...
-Description:    ...
-Homepage:       ...
+Category:       Email, Utility
+Synopsis:       A collection of tools to process mbox files
+Description:    A collection of tools to process mbox files
+Homepage:       https://github.com/np/mbox-tools
 Stability:      Experimental
 Build-Type:     Simple
 
