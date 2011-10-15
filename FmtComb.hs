@@ -29,7 +29,6 @@ import Data.Maybe (fromMaybe)
 import Data.List (intersperse)
 import Data.Monoid (Monoid(..))
 import Data.Char (isSpace)
-import Data.Label
 import Email
 
 type Message = (Email, MboxMessage B.ByteString)

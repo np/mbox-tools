@@ -44,10 +44,10 @@ swap :: (a,b) -> (b,a)
 swap (x,y) = (y,x)
 
 wrapState :: (acc -> x -> (acc, y)) -> x -> State acc y
-wrapState f x = State (\state -> swap (f state x))
+wrapState f x = state (\s -> swap (f s x))
 
 unwrapState :: (x -> State acc y) -> acc -> x -> (acc, y)
-unwrapState f state x = swap (runState (f x) state)
+unwrapState f s x = swap (runState (f x) s)
 -- END MISSING
 
 redactChar :: Char -> RedactState Char

@@ -1,6 +1,7 @@
-import Codec.Mbox (Mbox(..), MboxMessage(..), parseMbox)
+import Codec.Mbox (Mbox(..), MboxMessage(..), parseMbox, mboxMsgBody)
 import Control.Applicative ((<$>))
 import Data.List (foldl')
+import Data.Label
 import qualified Data.ByteString.Lazy as B
 
 data P a = P !a !Int
