@@ -1,6 +1,6 @@
 Name:           mbox-tools
 Cabal-Version:  >=1.8
-Version:        0.2.0.2
+Version:        0.2.0.3
 License:        BSD3
 License-File:   LICENSE
 Copyright:      (c) Nicolas Pouillard
@@ -49,21 +49,25 @@ executable mbox-list
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
                    pureMD5, fclabels>=1.0, mtl
     main-is: mbox-list.hs
+    Other-modules: Email, FmtComb, EmailFmt
     ghc-options: -Wall
 executable mbox-pick
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
                    pureMD5, fclabels, mtl
     main-is: mbox-pick.hs
+    Other-modules: Email, FmtComb, EmailFmt
     ghc-options: -Wall
 executable mbox-partition
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
                    pureMD5, fclabels, mtl, containers
     main-is: mbox-partition.hs
+    Other-modules: Email
     ghc-options: -Wall
 executable mbox-grep
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
                    pureMD5, fclabels, mtl
     main-is: mbox-grep.hs
+    Other-modules: Email
     ghc-options: -Wall
   if flag(use_hutt)
     build-depends: hutt>=0.1
