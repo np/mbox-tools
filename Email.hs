@@ -15,6 +15,7 @@
 module Email where
 
 import Control.Applicative
+import Control.Exception.Base
 import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString.Lazy as B
 {- TMP-NO-MIME
