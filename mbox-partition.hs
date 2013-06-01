@@ -12,10 +12,10 @@
 --------------------------------------------------------------------
 
 import Control.Applicative
+import Control.Lens hiding (inside,outside)
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFile,mboxMsgBody,showMboxMessage)
 import Email (Email(..),emailFields,readEmail)
 import Text.ParserCombinators.Parsec.Rfc2822 (Field(MessageID))
-import Data.Label
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Set (fromList, member)
 import qualified Data.ByteString.Lazy.Char8 as C
@@ -38,15 +38,15 @@ data Settings = Settings { _help :: Bool
                          , _inside :: String
                          , _outside :: String
                          }
-$(mkLabels [''Settings])
+$(makeLenses ''Settings)
 type Flag = Settings -> Settings
 
 partitionMbox :: Settings -> [String] -> IO ()
 partitionMbox opts mboxfiles = do
-  msgids' <- (fromList . C.lines) <$> C.readFile (get msgids opts)
-  let predicate = fromMaybe False . fmap (`member` msgids') . emailMsgId . readEmail . get mboxMsgBody
-  hinside <- openFile (get inside opts) AppendMode
-  houtside <- openFile (get outside opts) AppendMode
+  msgids' <- (fromList . C.lines) <$> C.readFile (opts^.msgids)
+  let predicate = fromMaybe False . fmap (`member` msgids') . emailMsgId . readEmail . view mboxMsgBody
+  hinside <- openFile (opts^.inside) AppendMode
+  houtside <- openFile (opts^.outside) AppendMode
   let onFile fp =
         progress_ . map (\m -> hPutStrLnC (if predicate m then hinside else houtside) (showMboxMessage m))
                   . mboxMessages
@@ -55,7 +55,7 @@ partitionMbox opts mboxfiles = do
   mapM_ hClose [hinside, houtside]
 
 emailMsgId :: Email -> Maybe C.ByteString
-emailMsgId m = listToMaybe [ removeAngles $ C.pack i | MessageID i <- get emailFields m ]
+emailMsgId m = listToMaybe [ removeAngles $ C.pack i | MessageID i <- m^.emailFields ]
 
 removeAngles :: C.ByteString -> C.ByteString
 removeAngles = C.takeWhile (/='>') . C.dropWhile (=='<')
@@ -84,7 +84,7 @@ main = do
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
   case (nonopts, errs) of
-    _ | get help opts -> usage ""
+    _ | opts^.help -> usage ""
     (_, _:_)          -> usage (concat errs)
     ([], _)           -> usage "Too few arguments (mbox-file missing)"
     (mboxfiles, _)    -> partitionMbox opts mboxfiles

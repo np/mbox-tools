@@ -12,6 +12,7 @@
 --------------------------------------------------------------------
 
 -- import Control.Arrow
+import Control.Lens
 import Control.Exception
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFiles,opposite,showMboxMessage)
 import System.Environment (getArgs)
@@ -20,12 +21,11 @@ import System.Exit
 import System.IO
 import qualified System.Process as P
 import qualified Data.ByteString.Lazy as L
-import Data.Label
 
 data Settings = Settings { _dir  :: Direction
                          , _help :: Bool
                          }
-$(mkLabels [''Settings])
+$(makeLenses ''Settings)
 
 type Flag = Settings -> Settings
 
@@ -41,7 +41,7 @@ systemWithStdin shellCmd input = do
 iterMbox :: Settings -> String -> [String] -> IO ()
 iterMbox opts cmd mboxfiles =
   mapM_ (mapM_ (systemWithStdin cmd . showMboxMessage) . mboxMessages)
-    =<< parseMboxFiles (get dir opts) mboxfiles
+    =<< parseMboxFiles (opts^.dir) mboxfiles
 
 defaultSettings :: Settings
 defaultSettings = Settings { _dir  = Forward
@@ -54,7 +54,7 @@ usage msg = error $ unlines [msg, usageInfo header options]
 
 options :: [OptDescr Flag]
 options =
-  [ Option "r" ["reverse"] (NoArg (modify dir opposite)) "Reverse the mbox order (latest firsts)"
+  [ Option "r" ["reverse"] (NoArg (over dir opposite)) "Reverse the mbox order (latest firsts)"
   , Option "?" ["help"]    (NoArg (set help True)) "Show this help message"
   ]
 
@@ -63,7 +63,7 @@ main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if get help opts
+  if opts^.help
    then usage ""
    else
     case (nonopts, errs) of

@@ -12,8 +12,8 @@
 --------------------------------------------------------------------
 
 import Control.Arrow
+import Control.Lens
 import Control.Applicative
-import Data.Label
 import Data.Maybe (fromMaybe, listToMaybe)
 import qualified Data.ByteString.Lazy.Char8 as C
 import Codec.Mbox (mboxMsgBody,parseOneMboxMessage)
@@ -34,7 +34,7 @@ parseSeq = mapM (mayRead . C.unpack) . C.split ','
 data Settings = Settings { _fmt  :: ShowFormat
                          , _help :: Bool
                          }
-$(mkLabels [''Settings])
+$(makeLenses ''Settings)
 
 type Flag = Settings -> Settings
 
@@ -42,8 +42,8 @@ pickMbox :: Settings -> String -> Maybe FilePath -> IO ()
 pickMbox opts sequ' mmbox = do
   mbox <- maybe (return stdin) (`openFile` ReadMode) mmbox
   sequ <- maybe (fail "badly formatted comma separated offset sequence") return $ parseSeq $ C.pack sequ'
-  mails <- mapM ((((readEmail . get mboxMsgBody) &&& id) <$>) . parseOneMboxMessage (fromMaybe "" mmbox) mbox) sequ
-  putEmails (get fmt opts) mails
+  mails <- mapM ((((readEmail . view mboxMsgBody) &&& id) <$>) . parseOneMboxMessage (fromMaybe "" mmbox) mbox) sequ
+  putEmails (opts^.fmt) mails
   hClose mbox
 
 defaultSettings :: Settings
@@ -66,7 +66,7 @@ main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if get help opts
+  if opts^.help
    then usage ""
    else
     case (nonopts, errs) of

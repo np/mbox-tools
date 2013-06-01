@@ -15,6 +15,7 @@
 module Email where
 
 import Control.Applicative
+import Control.Lens
 import qualified Control.Exception as E
 import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString.Lazy as B
@@ -32,7 +33,6 @@ import System.Environment (getEnv)
 import Codec.Mbox (Mbox(..), mboxMsgBody)
 import Data.Maybe (listToMaybe, fromMaybe)
 import Data.Char (toLower)
-import Data.Label
 
 data Email = Email { _emailFields  :: [Field]
                    -- TMP-NO-MIME , _emailContent :: MIMEValueB
@@ -41,7 +41,7 @@ data Email = Email { _emailFields  :: [Field]
                    }
   deriving (Show)
 
-$(mkLabels [''Email])
+$(makeLenses ''Email)
 
 myCunpack :: C.ByteString -> String
 myCunpack = C.unpack
@@ -123,7 +123,7 @@ readEmail !orig = mkEmail $ fromMaybe (error "readEmail: parse error") $ splitAt
           -}
 
 readMboxEmails :: Mbox B.ByteString -> [Email]
-readMboxEmails = map (readEmail . get mboxMsgBody) . mboxMessages
+readMboxEmails = map (readEmail . view mboxMsgBody) . mboxMessages
 
 stringOfField :: Field -> (String, String)
 stringOfField (MessageID x) = ("message-id", fromMaybe (error "impossible: Email.stringOfField") $ unquote x)
@@ -132,10 +132,10 @@ stringOfField (OptionalField x y) = (map toLower x, y)
 stringOfField x = ("x-unknown", show x) -- TODO
 
 messageId :: Email -> Maybe String
-messageId msg = listToMaybe [ mid | MessageID mid <- get emailFields msg ]
+messageId msg = listToMaybe [ mid | MessageID mid <- msg^.emailFields ]
 
 messageSubject :: Email -> Maybe String
-messageSubject msg = listToMaybe [ mid | Subject mid <- get emailFields msg ]
+messageSubject msg = listToMaybe [ mid | Subject mid <- msg^.emailFields ]
 {-
   head ([show subject | Subject subject <- flds ]
       ++ ["(malformed subject) " ++ show subject | OptionalField "Subject" subject <- flds ]

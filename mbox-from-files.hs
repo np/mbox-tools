@@ -13,15 +13,15 @@
 
 import Prelude hiding (mod)
 import Control.Monad (join)
+import Control.Lens ((^.), makeLenses, set)
 import Codec.Mbox (Mbox(..),MboxMessage(..),showMbox)
 import System.Environment (getArgs)
 import System.Console.GetOpt
-import Data.Label
 import qualified Data.ByteString.Lazy.Char8 as B
 
 data Settings = Settings { _help :: Bool }
 
-$(mkLabels [''Settings])
+$(makeLenses ''Settings)
 
 type Flag = Settings -> Settings
 
@@ -59,7 +59,7 @@ main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if get help opts
+  if opts^.help
    then usage ""
    else
     case (nonopts, errs) of

@@ -23,11 +23,11 @@ flag useless
 -- TMP-NO-MIME, mime-bytestring
 
 executable mbox-counting
-    Build-depends: base(>=3 && <5), bytestring, codec-mbox
+    Build-depends: base(>=3 && <5), bytestring, codec-mbox>=0.2
     main-is: mbox-counting.hs
     ghc-options: -Wall
 executable mbox-average-size
-    Build-depends: base(>=3 && <5), bytestring, codec-mbox, fclabels
+    Build-depends: base(>=3 && <5), bytestring, codec-mbox, lens
     main-is: mbox-average-size.hs
     ghc-options: -Wall
   if !flag(useless)
@@ -47,25 +47,25 @@ executable redact-mbox
     buildable: False
 executable mbox-list
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
-                   pureMD5, fclabels>=1.0, mtl
+                   pureMD5, lens, mtl
     main-is: mbox-list.hs
     Other-modules: EOL, Email, FmtComb, EmailFmt
     ghc-options: -Wall
 executable mbox-pick
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
-                   pureMD5, fclabels, mtl
+                   pureMD5, lens, mtl
     main-is: mbox-pick.hs
     Other-modules: EOL, Email, FmtComb, EmailFmt
     ghc-options: -Wall
 executable mbox-partition
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
-                   pureMD5, fclabels, mtl, containers
+                   pureMD5, lens, mtl, containers
     main-is: mbox-partition.hs
     Other-modules: EOL, Email
     ghc-options: -Wall
 executable mbox-grep
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
-                   pureMD5, fclabels, mtl
+                   pureMD5, lens, mtl
     main-is: mbox-grep.hs
     Other-modules: EOL, Email
     ghc-options: -Wall
@@ -75,17 +75,17 @@ executable mbox-grep
     buildable: False
 executable split-mbox
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
-                   pureMD5, fclabels, mtl
+                   pureMD5, lens, mtl
     main-is: split-mbox.hs
     ghc-options: -Wall
 executable mbox-iter
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
-                   pureMD5, fclabels, mtl
+                   pureMD5, lens, mtl
     main-is: mbox-iter.hs
     ghc-options: -Wall
     build-depends: process
 executable mbox-from-files
     Build-depends: base(>=3 && <5), bytestring, codec-mbox, parsec, hsemail,
-                   pureMD5, fclabels, mtl
+                   pureMD5, lens, mtl
     main-is: mbox-from-files.hs
     ghc-options: -Wall

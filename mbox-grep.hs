@@ -19,7 +19,6 @@ import Text.ParserCombinators.Parsec (parse)
 import Hutt.Query (evalQueryMsg,parseQuery)
 import Hutt.Types(Msg(..),Dsc(..),MsgId(..),DscId(..),Query(..))
 import Data.Tree (Tree(..))
-import Data.Label
 import Control.Arrow
 import System.Console.GetOpt
 
@@ -27,15 +26,15 @@ data Settings = Settings { _fmt  :: ShowFormat
                          , _dir  :: Direction
                          , _help :: Bool
                          }
-$(mkLabels [''Settings])
+$(makeLenses ''Settings)
 type Flag = Settings -> Settings
 
 grepMbox :: Settings -> String -> [String] -> IO ()
-grepMbox opts queryString = (mapM_ f =<<) . parseMboxFiles (get dir opts)
+grepMbox opts queryString = (mapM_ f =<<) . parseMboxFiles (opts^.dir)
   where query = either (error "malformed query") id $ parse parseQuery "<first-argument>" queryString
-        f     = putEmails (get fmt opts)
+        f     = putEmails (opts^.fmt)
                 . filter (emailMatchQuery query . fst)
-                . map ((readEmail . get mboxMsgBody) &&& id) . mboxMessages
+                . map ((readEmail . view mboxMsgBody) &&& id) . mboxMessages
 
 emailMatchQuery :: Query -> Email -> Bool
 emailMatchQuery query email = evalQueryMsg (msg, dsc) query
@@ -56,7 +55,7 @@ main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if get help opts
+  if opts^.help
    then usage ""
    else
     case (nonopts, errs) of

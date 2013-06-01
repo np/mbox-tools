@@ -15,13 +15,13 @@
 import Control.Arrow
 import Codec.Mbox (Mbox(..),MboxMessage,Direction(..),msgYear,msgMonthYear,parseMboxFile,showMbox)
 import qualified Data.ByteString.Lazy.Char8 as C
-import Data.Label
 import Data.Char (toLower)
 import Data.List (groupBy)
 import Data.Maybe (fromMaybe)
 import System.Environment (getArgs)
 import System.Console.GetOpt
 import System.IO (hFlush, stdout)
+import Control.Lens
 
 equating :: Eq b => (a -> b) -> a -> a -> Bool
 equating f x y = f x == f y
@@ -35,7 +35,7 @@ data SplitBy = Year | Month
   deriving (Show, Enum)
 
 data Settings = Settings { _help :: Bool, _splitBy :: SplitBy }
-$(mkLabels [''Settings])
+$(makeLenses ''Settings)
 type Flag = Settings -> Settings
 
 splitMbox :: Eq a => (MboxMessage C.ByteString -> a) -> (MboxMessage C.ByteString -> String) -> String -> IO ()
@@ -50,7 +50,7 @@ splitMbox keyMsg fmtMsg mboxfile = do
 
 splitMboxWith :: Settings -> String -> IO ()
 splitMboxWith settings =
-  case get splitBy settings of
+  case settings^.splitBy of
     Year  -> splitMbox msgYear (show . msgYear)
     Month -> splitMbox msgMonthYear (uncurry (++) . (map toLower . show *** ('-':) . show) . msgMonthYear)
 
@@ -77,7 +77,7 @@ main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if get help opts
+  if opts^.help
    then usage ""
    else
     case (nonopts, errs) of

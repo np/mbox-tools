@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, TypeOperators #-}
+{-# LANGUAGE TemplateHaskell, TypeOperators, Rank2Types #-}
 --------------------------------------------------------------------
 -- |
 -- Executable : mbox-list
@@ -13,12 +13,12 @@
 
 import Prelude
 import Control.Arrow
+import Control.Lens
 import Codec.Mbox (Mbox(..),Direction(..),parseMboxFiles,mboxMsgBody,opposite)
 import Email (readEmail)
 import EmailFmt (putEmails,ShowFormat(..),fmtOpt,defaultShowFormat,showFormatsDoc)
 import System.Environment (getArgs)
 import System.Console.GetOpt
-import Data.Label
 
 data Settings = Settings { _fmt      :: ShowFormat
                          , _dir      :: Direction
@@ -26,18 +26,18 @@ data Settings = Settings { _fmt      :: ShowFormat
                          , _dropOpt  :: Maybe Int
                          , _help     :: Bool
                          }
-$(mkLabels [''Settings])
+$(makeLenses ''Settings)
 
 type Flag = Settings -> Settings
 
 listMbox :: Settings -> [String] -> IO ()
 listMbox opts mboxfiles =
-  mapM_ (putEmails (get fmt opts) .
-         map ((readEmail . get mboxMsgBody) &&& id) .
-         maybe id take (get takeOpt opts) .
-         maybe id drop (get dropOpt opts) .
+  mapM_ (putEmails (opts^.fmt) .
+         map ((readEmail . view mboxMsgBody) &&& id) .
+         maybe id take (opts^.takeOpt) .
+         maybe id drop (opts^.dropOpt) .
          mboxMessages)
-    =<< parseMboxFiles (get dir opts) mboxfiles
+    =<< parseMboxFiles (opts^.dir) mboxfiles
 
 defaultSettings :: Settings
 defaultSettings = Settings { _fmt      = defaultShowFormat
@@ -51,7 +51,7 @@ usage :: String -> a
 usage msg = error $ unlines [msg, usageInfo header options, showFormatsDoc]
   where header = "Usage: mbox-list [OPTION] <mbox-file>*"
 
-maybeIntArg :: (Settings :-> Maybe Int) -> ArgDescr (Settings -> Settings)
+maybeIntArg :: Lens' Settings (Maybe Int) -> ArgDescr (Settings -> Settings)
 maybeIntArg l = ReqArg (set l . Just . read) "NUM"
 
 -- Since
@@ -60,7 +60,7 @@ maybeIntArg l = ReqArg (set l . Just . read) "NUM"
 options :: [OptDescr Flag]
 options =
   [ fmtOpt usage (set fmt)
-  , Option "r" ["reverse"]  (NoArg (modify dir opposite)) "Reverse the mbox order (latest firsts)"
+  , Option "r" ["reverse"]  (NoArg (over dir opposite)) "Reverse the mbox order (latest firsts)"
   , Option "d" ["drop"]     (maybeIntArg dropOpt)         "Drop the NUM firsts"
   , Option "t" ["take"]     (maybeIntArg takeOpt)         "Take the NUM firsts (happens after --drop)"
   , Option "?" ["help"]     (NoArg (set help True))       "Show this help message"
@@ -71,7 +71,7 @@ main = do
   args <- getArgs
   let (flags, nonopts, errs) = getOpt Permute options args
   let opts = foldr ($) defaultSettings flags
-  if get help opts
+  if opts^.help
    then usage ""
    else
     case (nonopts, errs) of

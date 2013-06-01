@@ -1,7 +1,7 @@
 import Codec.Mbox (Mbox(..), MboxMessage(..), parseMbox, mboxMsgBody)
 import Control.Applicative ((<$>))
+import Control.Lens (view)
 import Data.List (foldl')
-import Data.Label
 import qualified Data.ByteString.Lazy as B
 
 data P a = P !a !Int
@@ -14,7 +14,7 @@ average xs = s / fromIntegral l
         f (P a b) x = P (a + x) (b + 1)
 
 mboxAverageSize :: Mbox B.ByteString -> Double
-mboxAverageSize = average . map (fromIntegral . B.length . get mboxMsgBody) . mboxMessages
+mboxAverageSize = average . map (fromIntegral . B.length . view mboxMsgBody) . mboxMessages
 
 main :: IO ()
 main = do putStrLn "Reading from stdin..."
