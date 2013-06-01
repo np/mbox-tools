@@ -15,6 +15,7 @@
 module Email where
 
 import Control.Applicative
+import qualified Control.Exception as E
 import qualified Data.ByteString.Lazy.Char8 as C
 import qualified Data.ByteString.Lazy as B
 {- TMP-NO-MIME
@@ -75,9 +76,9 @@ readFields = map (readField . (`C.append` (C.pack "\r\n"))) . C.lines
 -}
 
 safeGetEnv :: String -> IO (Maybe String)
-safeGetEnv s = (Just <$> getEnv s) `catch` \e -> if isDoesNotExistError e
-                                                 then return Nothing
-                                                 else ioError e -- I'm wondering if this could happen
+safeGetEnv s = (Just <$> getEnv s) `E.catch` \e -> if isDoesNotExistError e
+                                                   then return Nothing
+                                                   else ioError e -- I'm wondering if this could happen
 
 {- TMP-NO-MIME
 {-# NOINLINE dynParseMIMEBody #-}
